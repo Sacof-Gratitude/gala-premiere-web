@@ -275,7 +275,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-300 mb-4">{nominee.description}</p>
-                  <Button variant="outline" size="sm" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black">
+                  <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black">
                     Voir le profil
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -322,7 +322,7 @@ const Index = () => {
                       <p className="text-white text-sm font-medium group-hover:text-yellow-400 transition-colors">
                         {sponsor.name}
                       </p>
-                      <Badge variant="outline" size="sm" className="mt-1 border-yellow-400 text-yellow-400">
+                      <Badge variant="outline" className="mt-1 border-yellow-400 text-yellow-400">
                         {sponsor.tier}
                       </Badge>
                     </div>

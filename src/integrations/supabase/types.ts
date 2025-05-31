@@ -9,7 +9,246 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      agencies: {
+        Row: {
+          achievements: string
+          category_id: string
+          created_at: string
+          description: string
+          founded_year: number | null
+          id: string
+          is_winner: boolean
+          location: string
+          logo: string | null
+          name: string
+          specialties: string
+          team_size: number | null
+          type: string
+          updated_at: string
+          vote_url: string
+          website: string | null
+        }
+        Insert: {
+          achievements: string
+          category_id: string
+          created_at?: string
+          description: string
+          founded_year?: number | null
+          id?: string
+          is_winner?: boolean
+          location: string
+          logo?: string | null
+          name: string
+          specialties: string
+          team_size?: number | null
+          type: string
+          updated_at?: string
+          vote_url: string
+          website?: string | null
+        }
+        Update: {
+          achievements?: string
+          category_id?: string
+          created_at?: string
+          description?: string
+          founded_year?: number | null
+          id?: string
+          is_winner?: boolean
+          location?: string
+          logo?: string | null
+          name?: string
+          specialties?: string
+          team_size?: number | null
+          type?: string
+          updated_at?: string
+          vote_url?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agencies_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          criteria: string
+          description: string
+          gala_id: string
+          id: string
+          name: string
+          order_number: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criteria: string
+          description: string
+          gala_id: string
+          id?: string
+          name: string
+          order_number: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criteria?: string
+          description?: string
+          gala_id?: string
+          id?: string
+          name?: string
+          order_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_gala_id_fkey"
+            columns: ["gala_id"]
+            isOneToOne: false
+            referencedRelation: "galas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      galas: {
+        Row: {
+          created_at: string
+          description: string
+          event_date: string
+          id: string
+          is_active: boolean
+          max_participants: number | null
+          nomination_end_date: string | null
+          nomination_start_date: string | null
+          status: Database["public"]["Enums"]["gala_status"]
+          ticketing_url: string | null
+          title: string
+          updated_at: string
+          venue: string
+          voting_end_date: string | null
+          voting_start_date: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          event_date: string
+          id?: string
+          is_active?: boolean
+          max_participants?: number | null
+          nomination_end_date?: string | null
+          nomination_start_date?: string | null
+          status?: Database["public"]["Enums"]["gala_status"]
+          ticketing_url?: string | null
+          title: string
+          updated_at?: string
+          venue: string
+          voting_end_date?: string | null
+          voting_start_date?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          event_date?: string
+          id?: string
+          is_active?: boolean
+          max_participants?: number | null
+          nomination_end_date?: string | null
+          nomination_start_date?: string | null
+          status?: Database["public"]["Enums"]["gala_status"]
+          ticketing_url?: string | null
+          title?: string
+          updated_at?: string
+          venue?: string
+          voting_end_date?: string | null
+          voting_start_date?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          image: string | null
+          name: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          image?: string | null
+          name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          image?: string | null
+          name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sponsors: {
+        Row: {
+          created_at: string
+          description: string | null
+          gala_id: string
+          id: string
+          level: Database["public"]["Enums"]["sponsor_level"]
+          logo: string | null
+          name: string
+          order_number: number | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          gala_id: string
+          id?: string
+          level: Database["public"]["Enums"]["sponsor_level"]
+          logo?: string | null
+          name: string
+          order_number?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          gala_id?: string
+          id?: string
+          level?: Database["public"]["Enums"]["sponsor_level"]
+          logo?: string | null
+          name?: string
+          order_number?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_gala_id_fkey"
+            columns: ["gala_id"]
+            isOneToOne: false
+            referencedRelation: "galas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +257,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      gala_status:
+        | "DRAFT"
+        | "NOMINATIONS_OPEN"
+        | "VOTING_OPEN"
+        | "ENDED"
+        | "ARCHIVED"
+      sponsor_level: "PLATINUM" | "GOLD" | "SILVER" | "BRONZE"
+      user_role: "USER" | "ADMIN" | "SUPER_ADMIN"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +379,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      gala_status: [
+        "DRAFT",
+        "NOMINATIONS_OPEN",
+        "VOTING_OPEN",
+        "ENDED",
+        "ARCHIVED",
+      ],
+      sponsor_level: ["PLATINUM", "GOLD", "SILVER", "BRONZE"],
+      user_role: ["USER", "ADMIN", "SUPER_ADMIN"],
+    },
   },
 } as const

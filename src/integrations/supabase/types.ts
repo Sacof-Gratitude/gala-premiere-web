@@ -172,6 +172,156 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_images: {
+        Row: {
+          caption: string | null
+          category: string | null
+          created_at: string
+          gala_id: string
+          id: string
+          image_url: string
+          order_number: number | null
+          photographer: string | null
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          category?: string | null
+          created_at?: string
+          gala_id: string
+          id?: string
+          image_url: string
+          order_number?: number | null
+          photographer?: string | null
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          category?: string | null
+          created_at?: string
+          gala_id?: string
+          id?: string
+          image_url?: string
+          order_number?: number | null
+          photographer?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_images_gala_id_fkey"
+            columns: ["gala_id"]
+            isOneToOne: false
+            referencedRelation: "galas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      panel_speakers: {
+        Row: {
+          bio: string | null
+          company: string
+          created_at: string
+          id: string
+          image: string | null
+          linkedin_url: string | null
+          name: string
+          order_number: number
+          panel_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          company: string
+          created_at?: string
+          id?: string
+          image?: string | null
+          linkedin_url?: string | null
+          name: string
+          order_number: number
+          panel_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          company?: string
+          created_at?: string
+          id?: string
+          image?: string | null
+          linkedin_url?: string | null
+          name?: string
+          order_number?: number
+          panel_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panel_speakers_panel_id_fkey"
+            columns: ["panel_id"]
+            isOneToOne: false
+            referencedRelation: "panels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      panels: {
+        Row: {
+          created_at: string
+          description: string
+          end_time: string | null
+          gala_id: string
+          id: string
+          moderator_bio: string | null
+          moderator_image: string | null
+          moderator_name: string
+          order_number: number
+          start_time: string | null
+          theme: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          end_time?: string | null
+          gala_id: string
+          id?: string
+          moderator_bio?: string | null
+          moderator_image?: string | null
+          moderator_name: string
+          order_number: number
+          start_time?: string | null
+          theme: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          end_time?: string | null
+          gala_id?: string
+          id?: string
+          moderator_bio?: string | null
+          moderator_image?: string | null
+          moderator_name?: string
+          order_number?: number
+          start_time?: string | null
+          theme?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panels_gala_id_fkey"
+            columns: ["gala_id"]
+            isOneToOne: false
+            referencedRelation: "galas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

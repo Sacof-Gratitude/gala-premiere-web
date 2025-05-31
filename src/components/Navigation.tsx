@@ -1,94 +1,81 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Trophy, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { 
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
+import { useGalaYears } from '@/hooks/useGalaData';
 
-const Navigation = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+interface NavigationProps {
+  selectedYear: number;
+  onYearChange: (year: number) => void;
+}
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+const Navigation = ({ selectedYear, onYearChange }: NavigationProps) => {
+  const { data: galaYears } = useGalaYears();
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-yellow-400/20">
+    <nav className="w-full bg-black/90 backdrop-blur-sm border-b border-yellow-500/20 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <Trophy className="h-8 w-8 text-yellow-400" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
-              Gala Immobilier 2024
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <a href="#categories" className="text-white hover:text-yellow-400 transition-colors font-medium">
-              Catégories
-            </a>
-            <a href="#nominees" className="text-white hover:text-yellow-400 transition-colors font-medium">
-              Nominés
-            </a>
-            <a href="#sponsors" className="text-white hover:text-yellow-400 transition-colors font-medium">
-              Partenaires
-            </a>
-            <a href="#voting" className="text-white hover:text-yellow-400 transition-colors font-medium">
-              Votes
-            </a>
-            <Button className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-semibold hover:from-yellow-500 hover:to-yellow-700">
-              Acheter des billets
-            </Button>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
+              <span className="text-black font-bold text-sm">GA</span>
+            </div>
+            <h1 className="text-xl font-bold text-yellow-400">
+              Gala Immobilier Africain
+            </h1>
           </div>
-
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden text-white hover:text-yellow-400"
-            onClick={toggleMenu}
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-yellow-400/20">
-            <div className="flex flex-col space-y-4 mt-4">
-              <a 
-                href="#categories" 
-                className="text-white hover:text-yellow-400 transition-colors font-medium py-2"
-                onClick={toggleMenu}
+          
+          <div className="flex items-center space-x-6">
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="bg-transparent text-yellow-400 hover:text-white">
+                    Gala {selectedYear}
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-2 p-4 w-48">
+                      {galaYears?.map((gala) => (
+                        <Button
+                          key={gala.year}
+                          variant={selectedYear === gala.year ? "default" : "ghost"}
+                          className={`justify-start ${
+                            selectedYear === gala.year 
+                              ? "bg-yellow-500 text-black" 
+                              : "text-yellow-400 hover:text-white hover:bg-yellow-500/20"
+                          }`}
+                          onClick={() => onYearChange(gala.year)}
+                        >
+                          {gala.year} {gala.status === 'ENDED' ? '(Terminé)' : ''}
+                        </Button>
+                      ))}
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+            
+            <div className="flex space-x-4">
+              <Button 
+                variant="outline" 
+                className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
               >
-                Catégories
-              </a>
-              <a 
-                href="#nominees" 
-                className="text-white hover:text-yellow-400 transition-colors font-medium py-2"
-                onClick={toggleMenu}
+                Panels
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
               >
-                Nominés
-              </a>
-              <a 
-                href="#sponsors" 
-                className="text-white hover:text-yellow-400 transition-colors font-medium py-2"
-                onClick={toggleMenu}
-              >
-                Partenaires
-              </a>
-              <a 
-                href="#voting" 
-                className="text-white hover:text-yellow-400 transition-colors font-medium py-2"
-                onClick={toggleMenu}
-              >
-                Votes
-              </a>
-              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-semibold hover:from-yellow-500 hover:to-yellow-700 mt-4">
-                Acheter des billets
+                Galerie
               </Button>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </nav>
   );

@@ -7,9 +7,10 @@ import CategoryCard from '@/components/CategoryCard';
 import AgencyCard from '@/components/AgencyCard';
 import PanelCard from '@/components/PanelCard';
 import GallerySection from '@/components/GallerySection';
+import SponsorCard from '@/components/SponsorCard';
+import SponsorshipSection from '@/components/SponsorshipSection';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, MapPin, Trophy, Sparkles, Clock, Users } from "lucide-react";
 
 const Index = () => {
@@ -54,28 +55,11 @@ const Index = () => {
   const eventDate = new Date(gala.event_date);
   const isCurrentYear = selectedYear === 2025;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black">
-      <Navigation selectedYear={selectedYear} onYearChange={setSelectedYear} />
-      
-      <main className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-900/50 border-yellow-500/20">
-            <TabsTrigger value="accueil" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
-              Accueil
-            </TabsTrigger>
-            <TabsTrigger value="agencies" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
-              Agences
-            </TabsTrigger>
-            <TabsTrigger value="panels" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
-              Panels
-            </TabsTrigger>
-            <TabsTrigger value="galerie" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
-              Galerie
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="accueil" className="space-y-12">
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'accueil':
+        return (
+          <div className="space-y-12">
             {/* Hero Section */}
             <section className="text-center space-y-6">
               <div className="inline-flex items-center px-4 py-2 bg-yellow-500/20 border border-yellow-500/30 rounded-full">
@@ -110,14 +94,14 @@ const Index = () => {
               </div>
             </section>
 
-            {/* Countdown Timer */}
+            {/* Countdown Timer - Reduced size */}
             {isCurrentYear && (
-              <section className="space-y-6">
+              <section className="space-y-4">
                 <div className="text-center">
-                  <h2 className="text-3xl font-bold text-white mb-2">
+                  <h2 className="text-2xl font-bold text-white mb-2">
                     Compte à rebours
                   </h2>
-                  <p className="text-gray-400">
+                  <p className="text-gray-400 text-sm">
                     Temps restant avant le grand événement
                   </p>
                 </div>
@@ -125,12 +109,12 @@ const Index = () => {
               </section>
             )}
 
-            {/* Stats Section */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Stats Section - Compact */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
-                <CardContent className="p-6 text-center">
-                  <Trophy className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-white mb-1">
+                <CardContent className="p-4 text-center">
+                  <Trophy className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
+                  <div className="text-xl font-bold text-white mb-1">
                     {categories.length}
                   </div>
                   <div className="text-sm text-gray-400">Catégories</div>
@@ -138,9 +122,9 @@ const Index = () => {
               </Card>
               
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
-                <CardContent className="p-6 text-center">
-                  <Users className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-white mb-1">
+                <CardContent className="p-4 text-center">
+                  <Users className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
+                  <div className="text-xl font-bold text-white mb-1">
                     {filteredAgencies.length}
                   </div>
                   <div className="text-sm text-gray-400">Agences Nominées</div>
@@ -148,9 +132,9 @@ const Index = () => {
               </Card>
               
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
-                <CardContent className="p-6 text-center">
-                  <Clock className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-white mb-1">
+                <CardContent className="p-4 text-center">
+                  <Clock className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
+                  <div className="text-xl font-bold text-white mb-1">
                     {panels.length}
                   </div>
                   <div className="text-sm text-gray-400">Panels de Discussion</div>
@@ -175,9 +159,34 @@ const Index = () => {
                 ))}
               </div>
             </section>
-          </TabsContent>
 
-          <TabsContent value="agencies" className="space-y-8">
+            {/* Sponsors Section */}
+            {sponsors.length > 0 && (
+              <section className="space-y-6">
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    Nos Sponsors {selectedYear}
+                  </h2>
+                  <p className="text-gray-400">
+                    Merci à nos partenaires qui rendent cet événement possible
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {sponsors
+                    .sort((a, b) => (a.order_number || 0) - (b.order_number || 0))
+                    .map((sponsor) => (
+                      <SponsorCard key={sponsor.id} sponsor={sponsor} />
+                    ))}
+                </div>
+              </section>
+            )}
+          </div>
+        );
+
+      case 'agencies':
+        return (
+          <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h2 className="text-3xl font-bold text-white mb-2">
@@ -220,9 +229,32 @@ const Index = () => {
                 <AgencyCard key={agency.id} agency={agency} />
               ))}
             </div>
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="panels" className="space-y-8">
+      case 'categories':
+        return (
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-white mb-2">
+                Catégories du Gala {selectedYear}
+              </h2>
+              <p className="text-gray-400">
+                Découvrez les différentes catégories de prix
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories.map((category) => (
+                <CategoryCard key={category.id} category={category} />
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'panels':
+        return (
+          <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-white mb-2">
                 Panels de Discussion {selectedYear}
@@ -246,9 +278,12 @@ const Index = () => {
                 <p className="text-gray-400">Aucun panel disponible pour le gala {selectedYear}</p>
               </div>
             )}
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="galerie" className="space-y-8">
+      case 'galerie':
+        return (
+          <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-white mb-2">
                 Galerie Photo {selectedYear}
@@ -259,8 +294,53 @@ const Index = () => {
             </div>
             
             <GallerySection images={gallery} galaYear={selectedYear} />
-          </TabsContent>
-        </Tabs>
+          </div>
+        );
+
+      case 'sponsors':
+        return (
+          <div className="space-y-12">
+            {sponsors.length > 0 && (
+              <section className="space-y-6">
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    Nos Sponsors {selectedYear}
+                  </h2>
+                  <p className="text-gray-400">
+                    Merci à nos partenaires qui rendent cet événement possible
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {sponsors
+                    .sort((a, b) => (a.order_number || 0) - (b.order_number || 0))
+                    .map((sponsor) => (
+                      <SponsorCard key={sponsor.id} sponsor={sponsor} />
+                    ))}
+                </div>
+              </section>
+            )}
+            
+            <SponsorshipSection />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black">
+      <Navigation 
+        selectedYear={selectedYear} 
+        onYearChange={setSelectedYear}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+      
+      <main className="container mx-auto px-4 py-8">
+        {renderContent()}
       </main>
     </div>
   );

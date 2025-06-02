@@ -46,14 +46,14 @@ const CountdownTimer = ({ targetDate }: CountdownTimerProps) => {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-4 max-w-lg mx-auto">
+    <div className="grid grid-cols-4 gap-6 max-w-4xl mx-auto">
       {timeUnits.map((unit, index) => (
         <Card key={index} className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/30 border-yellow-500/30">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-yellow-400 mb-2">
+          <CardContent className="p-6 text-center">
+            <div className="text-4xl md:text-5xl lg:text-6xl font-bold text-yellow-400 mb-3">
               {unit.value.toString().padStart(2, '0')}
             </div>
-            <div className="text-sm text-yellow-300 uppercase tracking-wide">
+            <div className="text-sm md:text-base text-yellow-300 uppercase tracking-wide font-medium">
               {unit.label}
             </div>
           </CardContent>

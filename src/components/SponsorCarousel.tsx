@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import SponsorCard from './SponsorCard';
@@ -32,6 +32,26 @@ const SponsorCarousel = ({ sponsors }: SponsorCarouselProps) => {
       scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
+
+  // Auto-scroll every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const container = scrollRef.current;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        
+        if (container.scrollLeft >= maxScroll) {
+          // Reset to beginning
+          container.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          // Scroll to next
+          container.scrollBy({ left: 300, behavior: 'smooth' });
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (sponsors.length === 0) return null;
 

@@ -10,6 +10,9 @@ import GallerySection from '@/components/GallerySection';
 import SponsorCarousel from '@/components/SponsorCarousel';
 import SponsorshipSection from '@/components/SponsorshipSection';
 import WinnersBanner from '@/components/WinnersBanner';
+import SponsorCard from '@/components/SponsorCard';
+import Footer from '@/components/Footer';
+import Admin from './Admin';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, MapPin, Trophy, Sparkles, Clock, Users } from "lucide-react";
@@ -54,12 +57,23 @@ const Index = () => {
     : categories.flatMap(category => category.agencies || []);
 
   const winners = categories.flatMap(category => 
-    category.agencies?.filter(agency => agency.is_winner) || []
+    (category.agencies?.filter(agency => agency.is_winner) || []).map(agency => ({
+      id: agency.id,
+      name: agency.name,
+      category: category.name,
+      type: agency.type,
+      location: agency.location
+    }))
   );
 
   const eventDate = new Date(gala.event_date);
   const isCurrentYear = selectedYear === 2025;
   const isEndedGala = gala.status === 'ENDED';
+
+  // Si l'onglet admin est sélectionné, afficher la page admin
+  if (activeTab === 'admin') {
+    return <Admin />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -123,11 +137,11 @@ const Index = () => {
             )}
 
             {/* Stats Section - Plus compact */}
-            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto">
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
                 <CardContent className="p-3 text-center">
-                  <Trophy className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
-                  <div className="text-lg font-bold text-white mb-1">
+                  <Trophy className="h-4 w-4 text-yellow-400 mx-auto mb-1" />
+                  <div className="text-sm font-bold text-white mb-1">
                     {categories.length}
                   </div>
                   <div className="text-xs text-gray-400">Catégories</div>
@@ -136,8 +150,8 @@ const Index = () => {
               
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
                 <CardContent className="p-3 text-center">
-                  <Users className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
-                  <div className="text-lg font-bold text-white mb-1">
+                  <Users className="h-4 w-4 text-yellow-400 mx-auto mb-1" />
+                  <div className="text-sm font-bold text-white mb-1">
                     {filteredParticipants.length}
                   </div>
                   <div className="text-xs text-gray-400">Participants</div>
@@ -146,8 +160,8 @@ const Index = () => {
               
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
                 <CardContent className="p-3 text-center">
-                  <Clock className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
-                  <div className="text-lg font-bold text-white mb-1">
+                  <Clock className="h-4 w-4 text-yellow-400 mx-auto mb-1" />
+                  <div className="text-sm font-bold text-white mb-1">
                     {panels.length}
                   </div>
                   <div className="text-xs text-gray-400">Panels</div>
@@ -340,6 +354,8 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         {renderContent()}
       </main>
+      
+      <Footer />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, MapPin, Users, Award, ArrowRight } from "lucide-react";
+import { Building2, MapPin, Users, Award, ArrowRight, Crown } from "lucide-react";
 
 interface Agency {
   id: string;
@@ -27,11 +27,11 @@ interface AgencyCardProps {
 
 const AgencyCard = ({ agency }: AgencyCardProps) => {
   const typeColors = {
-    IMMOBILIER: 'bg-yellow-500/20 text-yellow-400 border-yellow-400/30',
-    BTP: 'bg-orange-500/20 text-orange-400 border-orange-400/30',
-    TECH: 'bg-purple-500/20 text-purple-400 border-purple-400/30',
-    CONSEIL: 'bg-green-500/20 text-green-400 border-green-400/30',
-    FINANCEMENT: 'bg-blue-500/20 text-blue-400 border-blue-400/30'
+    'Entreprise Technologique': 'bg-purple-500/20 text-purple-400 border-purple-400/30',
+    'Incubateur': 'bg-green-500/20 text-green-400 border-green-400/30',
+    'Organisation Professionnelle': 'bg-blue-500/20 text-blue-400 border-blue-400/30',
+    'Entreprise': 'bg-yellow-500/20 text-yellow-400 border-yellow-400/30',
+    'Startup': 'bg-orange-500/20 text-orange-400 border-orange-400/30'
   };
 
   return (
@@ -42,8 +42,9 @@ const AgencyCard = ({ agency }: AgencyCardProps) => {
           {agency.type}
         </Badge>
         {agency.is_winner && (
-          <Badge className="absolute top-4 left-4 bg-yellow-500 text-black font-bold">
-            🏆 Gagnant
+          <Badge className="absolute top-4 left-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold shadow-lg">
+            <Crown className="h-3 w-3 mr-1" />
+            GAGNANT
           </Badge>
         )}
       </div>
@@ -106,7 +107,7 @@ const AgencyCard = ({ agency }: AgencyCardProps) => {
           className="w-full border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
           onClick={() => window.open(agency.vote_url, '_blank')}
         >
-          Voter pour cette agence
+          Voter pour ce participant
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </CardContent>

@@ -41,7 +41,8 @@ interface CategoryCardProps {
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
-  const nominees = category.agencies?.length || 0;
+  const participants = category.agencies?.length || 0;
+  const winners = category.agencies?.filter(agency => agency.is_winner).length || 0;
 
   return (
     <Card className="bg-gradient-to-br from-black/40 to-black/60 border-yellow-400/20 backdrop-blur-sm hover:border-yellow-400/40 transition-all duration-300 group cursor-pointer h-full">
@@ -60,11 +61,17 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center gap-2">
           <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">
             <Users className="h-3 w-3 mr-1" />
-            {nominees} nominé{nominees > 1 ? 's' : ''}
+            {participants} participant{participants > 1 ? 's' : ''}
           </Badge>
+          {winners > 0 && (
+            <Badge variant="secondary" className="bg-green-500/20 text-green-400 border border-green-400/30">
+              <Trophy className="h-3 w-3 mr-1" />
+              {winners} gagnant{winners > 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
 
         {category.criteria && (
@@ -79,7 +86,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
             size="sm" 
             className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-200"
           >
-            Voir les nominés
+            Voir les participants
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

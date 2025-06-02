@@ -7,8 +7,9 @@ import CategoryCard from '@/components/CategoryCard';
 import AgencyCard from '@/components/AgencyCard';
 import PanelCard from '@/components/PanelCard';
 import GallerySection from '@/components/GallerySection';
-import SponsorCard from '@/components/SponsorCard';
+import SponsorCarousel from '@/components/SponsorCarousel';
 import SponsorshipSection from '@/components/SponsorshipSection';
+import WinnersBanner from '@/components/WinnersBanner';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, MapPin, Trophy, Sparkles, Clock, Users } from "lucide-react";
@@ -48,12 +49,17 @@ const Index = () => {
 
   const { gala, categories, sponsors, panels, gallery } = data;
   
-  const filteredAgencies = selectedCategory 
+  const filteredParticipants = selectedCategory 
     ? categories.find(c => c.id === selectedCategory)?.agencies || []
     : categories.flatMap(category => category.agencies || []);
 
+  const winners = categories.flatMap(category => 
+    category.agencies?.filter(agency => agency.is_winner) || []
+  );
+
   const eventDate = new Date(gala.event_date);
   const isCurrentYear = selectedYear === 2025;
+  const isEndedGala = gala.status === 'ENDED';
 
   const renderContent = () => {
     switch (activeTab) {
@@ -69,39 +75,41 @@ const Index = () => {
                 </span>
               </div>
               
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
                 {gala.title}
               </h1>
               
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-lg md:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed px-4">
                 {gala.description}
               </p>
               
-              <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-gray-400">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 text-gray-400">
                 <div className="flex items-center">
                   <CalendarDays className="h-5 w-5 mr-2" />
-                  {eventDate.toLocaleDateString('fr-FR', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+                  <span className="text-sm md:text-base">
+                    {eventDate.toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
                 </div>
                 <div className="flex items-center">
                   <MapPin className="h-5 w-5 mr-2" />
-                  {gala.venue}
+                  <span className="text-sm md:text-base">{gala.venue}</span>
                 </div>
               </div>
             </section>
 
-            {/* Countdown Timer - Reduced size */}
+            {/* Countdown Timer */}
             {isCurrentYear && (
-              <section className="space-y-4">
+              <section className="space-y-6">
                 <div className="text-center">
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                     Compte à rebours
                   </h2>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-gray-400">
                     Temps restant avant le grand événement
                   </p>
                 </div>
@@ -109,35 +117,40 @@ const Index = () => {
               </section>
             )}
 
-            {/* Stats Section - Compact */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Winners Section for Past Galas */}
+            {isEndedGala && winners.length > 0 && (
+              <WinnersBanner winners={winners} galaYear={selectedYear} />
+            )}
+
+            {/* Stats Section - Plus compact */}
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
-                <CardContent className="p-4 text-center">
-                  <Trophy className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-white mb-1">
+                <CardContent className="p-3 text-center">
+                  <Trophy className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
+                  <div className="text-lg font-bold text-white mb-1">
                     {categories.length}
                   </div>
-                  <div className="text-sm text-gray-400">Catégories</div>
+                  <div className="text-xs text-gray-400">Catégories</div>
                 </CardContent>
               </Card>
               
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
-                <CardContent className="p-4 text-center">
-                  <Users className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-white mb-1">
-                    {filteredAgencies.length}
+                <CardContent className="p-3 text-center">
+                  <Users className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
+                  <div className="text-lg font-bold text-white mb-1">
+                    {filteredParticipants.length}
                   </div>
-                  <div className="text-sm text-gray-400">Agences Nominées</div>
+                  <div className="text-xs text-gray-400">Participants</div>
                 </CardContent>
               </Card>
               
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
-                <CardContent className="p-4 text-center">
-                  <Clock className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-white mb-1">
+                <CardContent className="p-3 text-center">
+                  <Clock className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
+                  <div className="text-lg font-bold text-white mb-1">
                     {panels.length}
                   </div>
-                  <div className="text-sm text-gray-400">Panels de Discussion</div>
+                  <div className="text-xs text-gray-400">Panels</div>
                 </CardContent>
               </Card>
             </section>
@@ -145,11 +158,11 @@ const Index = () => {
             {/* Categories Overview */}
             <section className="space-y-6">
               <div className="text-center">
-                <h2 className="text-3xl font-bold text-white mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                   Catégories du Gala {selectedYear}
                 </h2>
                 <p className="text-gray-400">
-                  Découvrez les différentes catégories et leurs nominés
+                  Découvrez les différentes catégories et leurs participants
                 </p>
               </div>
               
@@ -160,40 +173,25 @@ const Index = () => {
               </div>
             </section>
 
-            {/* Sponsors Section */}
+            {/* Sponsors Carousel */}
             {sponsors.length > 0 && (
               <section className="space-y-6">
-                <div className="text-center">
-                  <h2 className="text-3xl font-bold text-white mb-2">
-                    Nos Sponsors {selectedYear}
-                  </h2>
-                  <p className="text-gray-400">
-                    Merci à nos partenaires qui rendent cet événement possible
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {sponsors
-                    .sort((a, b) => (a.order_number || 0) - (b.order_number || 0))
-                    .map((sponsor) => (
-                      <SponsorCard key={sponsor.id} sponsor={sponsor} />
-                    ))}
-                </div>
+                <SponsorCarousel sponsors={sponsors} />
               </section>
             )}
           </div>
         );
 
-      case 'agencies':
+      case 'nomines':
         return (
           <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  Agences Nominées {selectedYear}
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                  Participants {selectedYear}
                 </h2>
                 <p className="text-gray-400">
-                  {filteredAgencies.length} agences en compétition
+                  {filteredParticipants.length} participants en compétition
                 </p>
               </div>
               
@@ -206,7 +204,7 @@ const Index = () => {
                   }
                   onClick={() => setSelectedCategory(null)}
                 >
-                  Toutes
+                  Tous
                 </Button>
                 {categories.map((category) => (
                   <Button
@@ -225,8 +223,8 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAgencies.map((agency) => (
-                <AgencyCard key={agency.id} agency={agency} />
+              {filteredParticipants.map((participant) => (
+                <AgencyCard key={participant.id} agency={participant} />
               ))}
             </div>
           </div>
@@ -236,7 +234,7 @@ const Index = () => {
         return (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-white mb-2">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 Catégories du Gala {selectedYear}
               </h2>
               <p className="text-gray-400">
@@ -256,7 +254,7 @@ const Index = () => {
         return (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-white mb-2">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 Panels de Discussion {selectedYear}
               </h2>
               <p className="text-gray-400">
@@ -285,7 +283,7 @@ const Index = () => {
         return (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-white mb-2">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 Galerie Photo {selectedYear}
               </h2>
               <p className="text-gray-400">
@@ -303,8 +301,8 @@ const Index = () => {
             {sponsors.length > 0 && (
               <section className="space-y-6">
                 <div className="text-center">
-                  <h2 className="text-3xl font-bold text-white mb-2">
-                    Nos Sponsors {selectedYear}
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                    Nos Partenaires {selectedYear}
                   </h2>
                   <p className="text-gray-400">
                     Merci à nos partenaires qui rendent cet événement possible

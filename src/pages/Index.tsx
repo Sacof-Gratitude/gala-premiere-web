@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useGalaData } from '@/hooks/useGalaData';
 import Navigation from '@/components/Navigation';
@@ -52,6 +51,17 @@ const Index = () => {
     ? data?.categories.find(cat => cat.id === selectedCategory)
     : null;
 
+  // Transformation des données des gagnants pour correspondre à l'interface Winner
+  const winners = data?.categories.flatMap(cat => 
+    cat.agencies?.filter(agency => agency.is_winner).map(agency => ({
+      id: agency.id,
+      name: agency.name,
+      category: cat.name, // Ajout du nom de la catégorie
+      type: agency.type,
+      location: agency.location
+    })) || []
+  ) || [];
+
   const renderAccueil = () => (
     <div className="space-y-16">
       {/* Hero Section avec compte à rebours */}
@@ -101,9 +111,7 @@ const Index = () => {
       </section>
 
       {/* Bannière des gagnants */}
-      <WinnersBanner winners={data?.categories.flatMap(cat => 
-        cat.agencies?.filter(agency => agency.is_winner) || []
-      ) || []} />
+      <WinnersBanner winners={winners} galaYear={selectedYear} />
 
       {/* Section sponsors avec carrousel automatique */}
       <section className="py-16 px-4">
@@ -283,7 +291,7 @@ const Index = () => {
           </p>
         </div>
 
-        <GallerySection images={data?.gallery || []} />
+        <GallerySection images={data?.gallery || []} galaYear={selectedYear} />
       </div>
     </div>
   );

@@ -1,124 +1,153 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Award, Building2, Heart, Star } from "lucide-react";
+import { Trophy, MapPin, Users, Calendar, ExternalLink, Eye, EyeOff } from "lucide-react";
 
-interface NomineeCardProps {
-  id: number;
+interface Nominee {
+  id: string;
   name: string;
-  company: string;
-  category: string;
   description: string;
-  image: string;
-  projectDetails?: string;
-  votes?: number;
-  isWinner?: boolean;
-  onViewProfile?: () => void;
-  onVote?: () => void;
-  votingEnabled?: boolean;
+  type: string;
+  location: string;
+  specialties?: string;
+  achievements?: string;
+  website?: string;
+  vote_url?: string;
+  team_size?: number;
+  founded_year?: number;
+  is_winner: boolean;
+  category_id: string;
 }
 
-const NomineeCard: React.FC<NomineeCardProps> = ({
-  id,
-  name,
-  company,
-  category,
-  description,
-  image,
-  projectDetails,
-  votes = 0,
-  isWinner = false,
-  onViewProfile,
-  onVote,
-  votingEnabled = false
-}) => {
+interface NomineeCardProps {
+  nominee: Nominee;
+}
+
+const NomineeCard: React.FC<NomineeCardProps> = ({ nominee }) => {
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showFullSpecialties, setShowFullSpecialties] = useState(false);
+  const [showFullAchievements, setShowFullAchievements] = useState(false);
+
+  const truncateText = (text: string, maxLength: number = 120) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
   return (
-    <Card className="bg-gradient-to-br from-black/40 to-black/60 border-yellow-400/20 backdrop-blur-sm hover:border-yellow-400/40 transition-all duration-300 group overflow-hidden h-full">
-      <div className="relative">
-        <img 
-          src={image} 
-          alt={name}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        
-        {/* Category Badge */}
-        <Badge className="absolute top-4 right-4 bg-yellow-400 text-black font-medium">
-          {category}
-        </Badge>
-        
-        {/* Winner Badge */}
-        {isWinner && (
-          <Badge className="absolute top-4 left-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold">
-            <Award className="h-3 w-3 mr-1" />
-            GAGNANT
-          </Badge>
-        )}
-        
-        {/* Vote Count */}
-        {votes > 0 && (
-          <div className="absolute bottom-4 left-4 flex items-center space-x-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
-            <Heart className="h-3 w-3 text-red-400 fill-current" />
-            <span className="text-white text-xs font-medium">{votes}</span>
-          </div>
-        )}
-      </div>
-
-      <CardHeader className="pb-3">
-        <CardTitle className="text-white group-hover:text-yellow-400 transition-colors leading-tight">
-          {name}
-        </CardTitle>
-        <CardDescription className="text-yellow-400 font-medium flex items-center">
-          <Building2 className="h-4 w-4 mr-1" />
-          {company}
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        <p className="text-gray-300 text-sm leading-relaxed">{description}</p>
-        
-        {projectDetails && (
-          <div className="text-xs text-gray-400 bg-black/20 rounded-lg p-3 border border-gray-700">
-            <strong className="text-gray-300">Détails du projet:</strong> {projectDetails}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between text-xs text-gray-400">
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center">
-              <Star className="h-3 w-3 text-yellow-400 mr-1" />
-              <span>Nominé</span>
-            </div>
-            {votes > 0 && (
-              <div className="flex items-center">
-                <Heart className="h-3 w-3 text-red-400 mr-1" />
-                <span>{votes} votes</span>
-              </div>
+    <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700 hover:border-yellow-500/50 transition-all duration-300 h-full">
+      <CardContent className="p-6 flex flex-col h-full">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="text-white font-bold text-lg mb-2">{nominee.name}</h3>
+            {nominee.is_winner && (
+              <Badge className="bg-yellow-400 text-black font-bold mb-2">
+                <Trophy className="h-3 w-3 mr-1" />
+                GAGNANT
+              </Badge>
             )}
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-200"
-            onClick={onViewProfile}
-          >
-            Voir le profil complet
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+        <div className="flex-1 space-y-3">
+          <div>
+            <p className="text-gray-300 text-sm leading-relaxed">
+              {showFullDescription ? nominee.description : truncateText(nominee.description)}
+              {nominee.description.length > 120 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-yellow-400 hover:text-yellow-300 p-0 h-auto ml-1"
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                >
+                  {showFullDescription ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                </Button>
+              )}
+            </p>
+          </div>
 
-          {votingEnabled && !isWinner && (
-            <Button 
-              size="sm" 
-              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold hover:from-red-600 hover:to-red-700"
-              onClick={onVote}
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="border-blue-500 text-blue-400 text-xs">
+              {nominee.type}
+            </Badge>
+            <Badge variant="outline" className="border-green-500 text-green-400 text-xs">
+              <MapPin className="h-3 w-3 mr-1" />
+              {nominee.location}
+            </Badge>
+            {nominee.team_size && (
+              <Badge variant="outline" className="border-purple-500 text-purple-400 text-xs">
+                <Users className="h-3 w-3 mr-1" />
+                {nominee.team_size} personnes
+              </Badge>
+            )}
+            {nominee.founded_year && (
+              <Badge variant="outline" className="border-orange-500 text-orange-400 text-xs">
+                <Calendar className="h-3 w-3 mr-1" />
+                {nominee.founded_year}
+              </Badge>
+            )}
+          </div>
+
+          {nominee.specialties && (
+            <div>
+              <h4 className="text-yellow-400 font-medium text-sm mb-1">Spécialités</h4>
+              <p className="text-gray-400 text-xs">
+                {showFullSpecialties ? nominee.specialties : truncateText(nominee.specialties, 80)}
+                {nominee.specialties.length > 80 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-yellow-400 hover:text-yellow-300 p-0 h-auto ml-1"
+                    onClick={() => setShowFullSpecialties(!showFullSpecialties)}
+                  >
+                    {showFullSpecialties ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  </Button>
+                )}
+              </p>
+            </div>
+          )}
+
+          {nominee.achievements && (
+            <div>
+              <h4 className="text-yellow-400 font-medium text-sm mb-1">Réalisations</h4>
+              <p className="text-gray-400 text-xs">
+                {showFullAchievements ? nominee.achievements : truncateText(nominee.achievements, 80)}
+                {nominee.achievements.length > 80 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-yellow-400 hover:text-yellow-300 p-0 h-auto ml-1"
+                    onClick={() => setShowFullAchievements(!showFullAchievements)}
+                  >
+                    {showFullAchievements ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  </Button>
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex space-x-2 mt-4 pt-4 border-t border-gray-700">
+          {nominee.website && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-600 text-gray-300 hover:bg-gray-700 flex-1"
+              onClick={() => window.open(nominee.website, '_blank')}
             >
-              <Heart className="mr-2 h-4 w-4" />
-              Voter pour ce nominé
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Site web
+            </Button>
+          )}
+          {nominee.vote_url && (
+            <Button
+              size="sm"
+              className="bg-yellow-500 text-black hover:bg-yellow-600 flex-1"
+              onClick={() => window.open(nominee.vote_url, '_blank')}
+            >
+              <Trophy className="h-3 w-3 mr-1" />
+              Voter
             </Button>
           )}
         </div>

@@ -29,11 +29,14 @@ import {
   Crown,
   Medal,
   Star,
-  Upload
+  Upload,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGalaData } from "@/hooks/useGalaData";
 import { useToast } from "@/hooks/use-toast";
+import AutocompleteInput from "@/components/AutocompleteInput";
+import AdminSearchBar from "@/components/AdminSearchBar";
 
 const Admin = () => {
   const [selectedYear, setSelectedYear] = useState(2025);
@@ -43,9 +46,10 @@ const Admin = () => {
   const [formData, setFormData] = useState<any>({});
   const [typeInput, setTypeInput] = useState('');
   const [typeSuggestions, setTypeSuggestions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const { data, isLoading, refetch } = useGalaData(selectedYear);
+  const { data, isLoading: dataLoading, refetch } = useGalaData(selectedYear);
 
   // Types/secteurs existants pour les suggestions
   const existingTypes = [
@@ -72,67 +76,102 @@ const Admin = () => {
   ];
 
   const handleCreate = async (table: 'agencies' | 'categories' | 'galas' | 'panels' | 'sponsors' | 'gallery_images' | 'panel_speakers', data: any) => {
+    setIsLoading(true);
     try {
-      const { error } = await supabase.from(table).insert([data]);
-      if (error) throw error;
+      console.log('Creating item in table:', table, 'with data:', data);
+      
+      const { data: result, error } = await supabase.from(table).insert([data]).select();
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      console.log('Item created successfully:', result);
       
       toast({
         title: "Succès",
         description: "Élément créé avec succès",
       });
       
-      refetch();
+      await refetch();
       setIsEditing(false);
       setFormData({});
+      setTypeInput('');
     } catch (error: any) {
+      console.error('Create error:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de la création",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUpdate = async (table: 'agencies' | 'categories' | 'galas' | 'panels' | 'sponsors' | 'gallery_images' | 'panel_speakers', id: string, data: any) => {
+    setIsLoading(true);
     try {
-      const { error } = await supabase.from(table).update(data).eq('id', id);
-      if (error) throw error;
+      console.log('Updating item in table:', table, 'with id:', id, 'and data:', data);
+      
+      const { data: result, error } = await supabase.from(table).update(data).eq('id', id).select();
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      console.log('Item updated successfully:', result);
       
       toast({
         title: "Succès",
         description: "Élément mis à jour avec succès",
       });
       
-      refetch();
+      await refetch();
       setIsEditing(false);
       setEditingItem(null);
       setFormData({});
+      setTypeInput('');
     } catch (error: any) {
+      console.error('Update error:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de la mise à jour",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async (table: 'agencies' | 'categories' | 'galas' | 'panels' | 'sponsors' | 'gallery_images' | 'panel_speakers', id: string) => {
+    setIsLoading(true);
     try {
+      console.log('Deleting item from table:', table, 'with id:', id);
+      
       const { error } = await supabase.from(table).delete().eq('id', id);
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      console.log('Item deleted successfully');
       
       toast({
         title: "Succès",
         description: "Élément supprimé avec succès",
       });
       
-      refetch();
+      await refetch();
     } catch (error: any) {
+      console.error('Delete error:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de la suppression",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -154,6 +193,34 @@ const Admin = () => {
     setTypeInput(suggestion);
     setFormData({...formData, type: suggestion});
     setTypeSuggestions([]);
+  };
+
+  const handleSearchSelect = (item: any) => {
+    console.log('Search selected item:', item);
+    // Ouvrir l'édition de l'élément sélectionné
+    const originalItem = findItemById(item.id, item.type);
+    if (originalItem) {
+      setIsEditing(true);
+      setEditingItem(originalItem);
+      setFormData({...originalItem});
+    }
+  };
+
+  const findItemById = (id: string, type: string) => {
+    switch (type) {
+      case 'category':
+        return data?.categories.find(c => c.id === id);
+      case 'nominee':
+        return data?.categories.flatMap(c => c.agencies || []).find(a => a.id === id);
+      case 'panel':
+        return data?.panels.find(p => p.id === id);
+      case 'sponsor':
+        return data?.sponsors.find(s => s.id === id);
+      case 'gallery':
+        return data?.gallery.find(g => g.id === id);
+      default:
+        return null;
+    }
   };
 
   const renderDashboard = () => (
@@ -291,8 +358,9 @@ const Admin = () => {
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
               >
-                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Sauvegarder
               </Button>
               <Button
@@ -303,6 +371,7 @@ const Admin = () => {
                   setFormData({});
                 }}
                 className="border-gray-600 text-gray-300"
+                disabled={isLoading}
               >
                 <X className="h-4 w-4 mr-2" />
                 Annuler
@@ -336,6 +405,7 @@ const Admin = () => {
                       setEditingItem(gala);
                       setFormData({...gala});
                     }}
+                    disabled={isLoading}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -429,8 +499,9 @@ const Admin = () => {
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
               >
-                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Sauvegarder
               </Button>
               <Button
@@ -441,6 +512,7 @@ const Admin = () => {
                   setFormData({});
                 }}
                 className="border-gray-600 text-gray-300"
+                disabled={isLoading}
               >
                 <X className="h-4 w-4 mr-2" />
                 Annuler
@@ -473,6 +545,7 @@ const Admin = () => {
                       setEditingItem(category);
                       setFormData({...category});
                     }}
+                    disabled={isLoading}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -481,8 +554,9 @@ const Admin = () => {
                     variant="outline" 
                     className="border-red-500 text-red-500"
                     onClick={() => handleDelete('categories', category.id)}
+                    disabled={isLoading}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -541,28 +615,13 @@ const Admin = () => {
                   className="bg-gray-800 border-gray-600 text-white"
                 />
               </div>
-              <div className="relative">
-                <Label className="text-gray-300">Type/Secteur</Label>
-                <Input
-                  value={typeInput}
-                  onChange={(e) => handleTypeInputChange(e.target.value)}
-                  className="bg-gray-800 border-gray-600 text-white"
-                  placeholder="Tapez pour rechercher ou ajouter un type..."
-                />
-                {typeSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
-                    {typeSuggestions.map((suggestion, index) => (
-                      <div
-                        key={index}
-                        className="px-3 py-2 text-white hover:bg-gray-700 cursor-pointer"
-                        onClick={() => selectSuggestion(suggestion)}
-                      >
-                        {suggestion}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <AutocompleteInput
+                label="Type/Secteur"
+                value={typeInput}
+                onChange={handleTypeInputChange}
+                suggestions={typeSuggestions}
+                placeholder="Tapez pour rechercher ou ajouter un type..."
+              />
               <div>
                 <Label className="text-gray-300">Localisation</Label>
                 <Input
@@ -660,8 +719,9 @@ const Admin = () => {
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
               >
-                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Sauvegarder
               </Button>
               <Button
@@ -673,6 +733,7 @@ const Admin = () => {
                   setTypeInput('');
                 }}
                 className="border-gray-600 text-gray-300"
+                disabled={isLoading}
               >
                 <X className="h-4 w-4 mr-2" />
                 Annuler
@@ -709,7 +770,9 @@ const Admin = () => {
                         setIsEditing(true);
                         setEditingItem(agency);
                         setFormData({...agency});
+                        setTypeInput(agency.type || '');
                       }}
+                      disabled={isLoading}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -718,8 +781,9 @@ const Admin = () => {
                       variant="outline" 
                       className="border-red-500 text-red-500"
                       onClick={() => handleDelete('agencies', agency.id)}
+                      disabled={isLoading}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -856,8 +920,9 @@ const Admin = () => {
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
               >
-                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Sauvegarder
               </Button>
               <Button
@@ -868,6 +933,7 @@ const Admin = () => {
                   setFormData({});
                 }}
                 className="border-gray-600 text-gray-300"
+                disabled={isLoading}
               >
                 <X className="h-4 w-4 mr-2" />
                 Annuler
@@ -901,6 +967,7 @@ const Admin = () => {
                       setEditingItem(panel);
                       setFormData({...panel});
                     }}
+                    disabled={isLoading}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -909,8 +976,9 @@ const Admin = () => {
                     variant="outline" 
                     className="border-red-500 text-red-500"
                     onClick={() => handleDelete('panels', panel.id)}
+                    disabled={isLoading}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -1030,8 +1098,9 @@ const Admin = () => {
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
               >
-                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Sauvegarder
               </Button>
               <Button
@@ -1042,6 +1111,7 @@ const Admin = () => {
                   setFormData({});
                 }}
                 className="border-gray-600 text-gray-300"
+                disabled={isLoading}
               >
                 <X className="h-4 w-4 mr-2" />
                 Annuler
@@ -1088,6 +1158,7 @@ const Admin = () => {
                       setEditingItem(sponsor);
                       setFormData({...sponsor});
                     }}
+                    disabled={isLoading}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -1096,8 +1167,9 @@ const Admin = () => {
                     variant="outline" 
                     className="border-red-500 text-red-500"
                     onClick={() => handleDelete('sponsors', sponsor.id)}
+                    disabled={isLoading}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -1199,8 +1271,9 @@ const Admin = () => {
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
               >
-                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Sauvegarder
               </Button>
               <Button
@@ -1211,6 +1284,7 @@ const Admin = () => {
                   setFormData({});
                 }}
                 className="border-gray-600 text-gray-300"
+                disabled={isLoading}
               >
                 <X className="h-4 w-4 mr-2" />
                 Annuler
@@ -1254,6 +1328,7 @@ const Admin = () => {
                       setEditingItem(image);
                       setFormData({...image});
                     }}
+                    disabled={isLoading}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -1262,8 +1337,9 @@ const Admin = () => {
                     variant="outline" 
                     className="border-red-500 text-red-500 flex-1"
                     onClick={() => handleDelete('gallery_images', image.id)}
+                    disabled={isLoading}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -1295,10 +1371,13 @@ const Admin = () => {
     }
   };
 
-  if (isLoading) {
+  if (dataLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black flex items-center justify-center">
-        <div className="text-yellow-400 text-xl">Chargement...</div>
+        <div className="text-yellow-400 text-xl flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Chargement...</span>
+        </div>
       </div>
     );
   }
@@ -1309,7 +1388,16 @@ const Admin = () => {
       <div className="bg-black/90 backdrop-blur-md border-b border-yellow-500/20 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-white font-bold text-xl">Administration - Gala {selectedYear}</h1>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-white font-bold text-xl">Administration - Gala {selectedYear}</h1>
+              {/* Barre de recherche intelligente */}
+              <AdminSearchBar
+                activeSection={activeSection}
+                data={data}
+                onSelectItem={handleSearchSelect}
+                placeholder={`Rechercher dans ${sections.find(s => s.id === activeSection)?.label.toLowerCase()}...`}
+              />
+            </div>
             <Button
               variant="outline"
               className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"

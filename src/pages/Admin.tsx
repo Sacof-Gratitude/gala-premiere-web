@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,12 @@ import {
   Trash2,
   Save,
   X,
-  Settings
+  Settings,
+  Home,
+  Crown,
+  Medal,
+  Star,
+  Upload
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGalaData } from "@/hooks/useGalaData";
@@ -37,21 +41,37 @@ const Admin = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
+  const [typeInput, setTypeInput] = useState('');
+  const [typeSuggestions, setTypeSuggestions] = useState<string[]>([]);
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useGalaData(selectedYear);
 
+  // Types/secteurs existants pour les suggestions
+  const existingTypes = [
+    'Agence de Communication',
+    'Agence Digitale', 
+    'Production Audiovisuelle',
+    'Relations Publiques',
+    'Marketing Digital',
+    'Événementiel',
+    'Design Graphique',
+    'Développement Web',
+    'Consulting',
+    'Media'
+  ];
+
   const sections = [
     { id: 'dashboard', label: 'Tableau de bord', icon: Settings },
     { id: 'galas', label: 'Galas', icon: Trophy },
-    { id: 'nominees', label: 'Nominés', icon: Users },
     { id: 'categories', label: 'Catégories', icon: Award },
+    { id: 'nominees', label: 'Nominés', icon: Users },
     { id: 'panels', label: 'Panels', icon: Calendar },
     { id: 'sponsors', label: 'Sponsors', icon: Handshake },
     { id: 'gallery', label: 'Galerie', icon: Image },
   ];
 
-  const handleCreate = async (table: string, data: any) => {
+  const handleCreate = async (table: 'agencies' | 'categories' | 'galas' | 'panels' | 'sponsors' | 'gallery_images' | 'panel_speakers', data: any) => {
     try {
       const { error } = await supabase.from(table).insert([data]);
       if (error) throw error;
@@ -73,7 +93,7 @@ const Admin = () => {
     }
   };
 
-  const handleUpdate = async (table: string, id: string, data: any) => {
+  const handleUpdate = async (table: 'agencies' | 'categories' | 'galas' | 'panels' | 'sponsors' | 'gallery_images' | 'panel_speakers', id: string, data: any) => {
     try {
       const { error } = await supabase.from(table).update(data).eq('id', id);
       if (error) throw error;
@@ -96,7 +116,7 @@ const Admin = () => {
     }
   };
 
-  const handleDelete = async (table: string, id: string) => {
+  const handleDelete = async (table: 'agencies' | 'categories' | 'galas' | 'panels' | 'sponsors' | 'gallery_images' | 'panel_speakers', id: string) => {
     try {
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) throw error;
@@ -114,6 +134,26 @@ const Admin = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleTypeInputChange = (value: string) => {
+    setTypeInput(value);
+    setFormData({...formData, type: value});
+    
+    if (value) {
+      const filtered = existingTypes.filter(type => 
+        type.toLowerCase().includes(value.toLowerCase())
+      );
+      setTypeSuggestions(filtered);
+    } else {
+      setTypeSuggestions([]);
+    }
+  };
+
+  const selectSuggestion = (suggestion: string) => {
+    setTypeInput(suggestion);
+    setFormData({...formData, type: suggestion});
+    setTypeSuggestions([]);
   };
 
   const renderDashboard = () => (
@@ -158,6 +198,301 @@ const Admin = () => {
     </div>
   );
 
+  const renderGalas = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white">Gestion des Galas</h2>
+        <Button 
+          className="bg-yellow-500 text-black hover:bg-yellow-600"
+          onClick={() => {
+            setIsEditing(true);
+            setEditingItem(null);
+            setFormData({
+              title: '',
+              description: '',
+              year: new Date().getFullYear(),
+              venue: 'Cotonou, Bénin',
+              event_date: '',
+              status: 'DRAFT',
+              is_active: false
+            });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter un gala
+        </Button>
+      </div>
+
+      {isEditing && (
+        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">
+              {editingItem ? 'Modifier le gala' : 'Ajouter un gala'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Titre</Label>
+                <Input
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Année</Label>
+                <Input
+                  type="number"
+                  value={formData.year || ''}
+                  onChange={(e) => setFormData({...formData, year: parseInt(e.target.value)})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Description</Label>
+              <Textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Lieu</Label>
+                <Input
+                  value={formData.venue || ''}
+                  onChange={(e) => setFormData({...formData, venue: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Date de l'événement</Label>
+                <Input
+                  type="datetime-local"
+                  value={formData.event_date || ''}
+                  onChange={(e) => setFormData({...formData, event_date: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => {
+                  if (editingItem) {
+                    handleUpdate('galas', editingItem.id, formData);
+                  } else {
+                    handleCreate('galas', formData);
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditingItem(null);
+                  setFormData({});
+                }}
+                className="border-gray-600 text-gray-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-4">
+        {[data?.gala].filter(Boolean).map(gala => (
+          <Card key={gala?.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">{gala?.title}</h3>
+                  <p className="text-gray-400 text-sm mb-2">{gala?.description}</p>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant="outline" className="border-blue-500 text-blue-400">{gala?.year}</Badge>
+                    <Badge variant="outline" className="border-green-500 text-green-400">{gala?.venue}</Badge>
+                    <Badge variant="outline" className="border-purple-500 text-purple-400">{gala?.status}</Badge>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-yellow-500 text-yellow-500"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditingItem(gala);
+                      setFormData({...gala});
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderCategories = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white">Gestion des Catégories</h2>
+        <Button 
+          className="bg-yellow-500 text-black hover:bg-yellow-600"
+          onClick={() => {
+            setIsEditing(true);
+            setEditingItem(null);
+            setFormData({
+              name: '',
+              description: '',
+              criteria: '',
+              order_number: 1,
+              gala_id: data?.gala?.id || ''
+            });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter une catégorie
+        </Button>
+      </div>
+
+      {isEditing && (
+        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">
+              {editingItem ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Nom</Label>
+                <Input
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Ordre</Label>
+                <Input
+                  type="number"
+                  value={formData.order_number || ''}
+                  onChange={(e) => setFormData({...formData, order_number: parseInt(e.target.value)})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Description</Label>
+              <Textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Critères</Label>
+              <Textarea
+                value={formData.criteria || ''}
+                onChange={(e) => setFormData({...formData, criteria: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => {
+                  if (editingItem) {
+                    handleUpdate('categories', editingItem.id, formData);
+                  } else {
+                    handleCreate('categories', {...formData, gala_id: data?.gala?.id});
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditingItem(null);
+                  setFormData({});
+                }}
+                className="border-gray-600 text-gray-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      <div className="grid grid-cols-1 gap-4">
+        {data?.categories.map(category => (
+          <Card key={category.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">{category.name}</h3>
+                  <p className="text-gray-400 text-sm mb-2">{category.description}</p>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant="outline" className="border-blue-500 text-blue-400">Ordre: {category.order_number}</Badge>
+                    <Badge variant="outline" className="border-green-500 text-green-400">{category.agencies?.length || 0} nominés</Badge>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-yellow-500 text-yellow-500"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditingItem(category);
+                      setFormData({...category});
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-red-500 text-red-500"
+                    onClick={() => handleDelete('categories', category.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderNominees = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -181,6 +516,7 @@ const Admin = () => {
               category_id: data?.categories[0]?.id || '',
               is_winner: false
             });
+            setTypeInput('');
           }}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -205,13 +541,27 @@ const Admin = () => {
                   className="bg-gray-800 border-gray-600 text-white"
                 />
               </div>
-              <div>
-                <Label className="text-gray-300">Type</Label>
+              <div className="relative">
+                <Label className="text-gray-300">Type/Secteur</Label>
                 <Input
-                  value={formData.type || ''}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  value={typeInput}
+                  onChange={(e) => handleTypeInputChange(e.target.value)}
                   className="bg-gray-800 border-gray-600 text-white"
+                  placeholder="Tapez pour rechercher ou ajouter un type..."
                 />
+                {typeSuggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    {typeSuggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-3 py-2 text-white hover:bg-gray-700 cursor-pointer"
+                        onClick={() => selectSuggestion(suggestion)}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <Label className="text-gray-300">Localisation</Label>
@@ -320,6 +670,7 @@ const Admin = () => {
                   setIsEditing(false);
                   setEditingItem(null);
                   setFormData({});
+                  setTypeInput('');
                 }}
                 className="border-gray-600 text-gray-300"
               >
@@ -380,19 +731,567 @@ const Admin = () => {
     </div>
   );
 
+  const renderPanels = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white">Gestion des Panels</h2>
+        <Button 
+          className="bg-yellow-500 text-black hover:bg-yellow-600"
+          onClick={() => {
+            setIsEditing(true);
+            setEditingItem(null);
+            setFormData({
+              title: '',
+              description: '',
+              theme: '',
+              moderator_name: '',
+              moderator_bio: '',
+              start_time: '',
+              end_time: '',
+              order_number: 1,
+              gala_id: data?.gala?.id || ''
+            });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter un panel
+        </Button>
+      </div>
+
+      {isEditing && (
+        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">
+              {editingItem ? 'Modifier le panel' : 'Ajouter un panel'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Titre</Label>
+                <Input
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Thème</Label>
+                <Input
+                  value={formData.theme || ''}
+                  onChange={(e) => setFormData({...formData, theme: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Description</Label>
+              <Textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Modérateur</Label>
+                <Input
+                  value={formData.moderator_name || ''}
+                  onChange={(e) => setFormData({...formData, moderator_name: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Ordre</Label>
+                <Input
+                  type="number"
+                  value={formData.order_number || ''}
+                  onChange={(e) => setFormData({...formData, order_number: parseInt(e.target.value)})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Bio du modérateur</Label>
+              <Textarea
+                value={formData.moderator_bio || ''}
+                onChange={(e) => setFormData({...formData, moderator_bio: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={2}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Heure de début</Label>
+                <Input
+                  type="datetime-local"
+                  value={formData.start_time || ''}
+                  onChange={(e) => setFormData({...formData, start_time: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Heure de fin</Label>
+                <Input
+                  type="datetime-local"
+                  value={formData.end_time || ''}
+                  onChange={(e) => setFormData({...formData, end_time: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => {
+                  if (editingItem) {
+                    handleUpdate('panels', editingItem.id, formData);
+                  } else {
+                    handleCreate('panels', {...formData, gala_id: data?.gala?.id});
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditingItem(null);
+                  setFormData({});
+                }}
+                className="border-gray-600 text-gray-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-4">
+        {data?.panels.map(panel => (
+          <Card key={panel.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-2">{panel.title}</h3>
+                  <p className="text-gray-400 text-sm mb-2">{panel.description}</p>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant="outline" className="border-blue-500 text-blue-400">{panel.theme}</Badge>
+                    <Badge variant="outline" className="border-green-500 text-green-400">{panel.moderator_name}</Badge>
+                    <Badge variant="outline" className="border-purple-500 text-purple-400">Ordre: {panel.order_number}</Badge>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-yellow-500 text-yellow-500"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditingItem(panel);
+                      setFormData({...panel});
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-red-500 text-red-500"
+                    onClick={() => handleDelete('panels', panel.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSponsors = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white">Gestion des Sponsors</h2>
+        <Button 
+          className="bg-yellow-500 text-black hover:bg-yellow-600"
+          onClick={() => {
+            setIsEditing(true);
+            setEditingItem(null);
+            setFormData({
+              name: '',
+              description: '',
+              level: 'BRONZE',
+              website: '',
+              logo: '',
+              order_number: 1,
+              gala_id: data?.gala?.id || ''
+            });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter un sponsor
+        </Button>
+      </div>
+
+      {isEditing && (
+        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">
+              {editingItem ? 'Modifier le sponsor' : 'Ajouter un sponsor'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Nom</Label>
+                <Input
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Niveau</Label>
+                <Select
+                  value={formData.level || 'BRONZE'}
+                  onValueChange={(value) => setFormData({...formData, level: value})}
+                >
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    <SelectItem value="PLATINUM" className="text-white">PLATINUM</SelectItem>
+                    <SelectItem value="GOLD" className="text-white">GOLD</SelectItem>
+                    <SelectItem value="SILVER" className="text-white">SILVER</SelectItem>
+                    <SelectItem value="BRONZE" className="text-white">BRONZE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Description</Label>
+              <Textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-gray-300">Site web</Label>
+                <Input
+                  value={formData.website || ''}
+                  onChange={(e) => setFormData({...formData, website: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Logo URL</Label>
+                <Input
+                  value={formData.logo || ''}
+                  onChange={(e) => setFormData({...formData, logo: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Ordre</Label>
+                <Input
+                  type="number"
+                  value={formData.order_number || ''}
+                  onChange={(e) => setFormData({...formData, order_number: parseInt(e.target.value)})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => {
+                  if (editingItem) {
+                    handleUpdate('sponsors', editingItem.id, formData);
+                  } else {
+                    handleCreate('sponsors', {...formData, gala_id: data?.gala?.id});
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditingItem(null);
+                  setFormData({});
+                }}
+                className="border-gray-600 text-gray-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-4">
+        {data?.sponsors.map(sponsor => (
+          <Card key={sponsor.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="text-white font-semibold">{sponsor.name}</h3>
+                    <Badge className={`${
+                      sponsor.level === 'PLATINUM' ? 'bg-slate-300 text-slate-800' :
+                      sponsor.level === 'GOLD' ? 'bg-yellow-400 text-yellow-800' :
+                      sponsor.level === 'SILVER' ? 'bg-gray-300 text-gray-800' :
+                      'bg-orange-400 text-orange-800'
+                    }`}>
+                      {sponsor.level === 'PLATINUM' && <Crown className="h-3 w-3 mr-1" />}
+                      {sponsor.level === 'GOLD' && <Trophy className="h-3 w-3 mr-1" />}
+                      {sponsor.level === 'SILVER' && <Medal className="h-3 w-3 mr-1" />}
+                      {sponsor.level === 'BRONZE' && <Star className="h-3 w-3 mr-1" />}
+                      {sponsor.level}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-400 text-sm mb-2">{sponsor.description}</p>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant="outline" className="border-blue-500 text-blue-400">Ordre: {sponsor.order_number}</Badge>
+                    {sponsor.website && <Badge variant="outline" className="border-green-500 text-green-400">Site web</Badge>}
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-yellow-500 text-yellow-500"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditingItem(sponsor);
+                      setFormData({...sponsor});
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-red-500 text-red-500"
+                    onClick={() => handleDelete('sponsors', sponsor.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderGallery = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white">Gestion de la Galerie</h2>
+        <Button 
+          className="bg-yellow-500 text-black hover:bg-yellow-600"
+          onClick={() => {
+            setIsEditing(true);
+            setEditingItem(null);
+            setFormData({
+              image_url: '',
+              caption: '',
+              category: '',
+              photographer: '',
+              order_number: 1,
+              gala_id: data?.gala?.id || ''
+            });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter une image
+        </Button>
+      </div>
+
+      {isEditing && (
+        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">
+              {editingItem ? 'Modifier l\'image' : 'Ajouter une image'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">URL de l'image</Label>
+                <Input
+                  value={formData.image_url || ''}
+                  onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Catégorie</Label>
+                <Input
+                  value={formData.category || ''}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Légende</Label>
+              <Textarea
+                value={formData.caption || ''}
+                onChange={(e) => setFormData({...formData, caption: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={2}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Photographe</Label>
+                <Input
+                  value={formData.photographer || ''}
+                  onChange={(e) => setFormData({...formData, photographer: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Ordre</Label>
+                <Input
+                  type="number"
+                  value={formData.order_number || ''}
+                  onChange={(e) => setFormData({...formData, order_number: parseInt(e.target.value)})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => {
+                  if (editingItem) {
+                    handleUpdate('gallery_images', editingItem.id, formData);
+                  } else {
+                    handleCreate('gallery_images', {...formData, gala_id: data?.gala?.id});
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditingItem(null);
+                  setFormData({});
+                }}
+                className="border-gray-600 text-gray-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {data?.gallery.map(image => (
+          <Card key={image.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+            <CardContent className="p-4">
+              <div className="aspect-video bg-gray-700 rounded-lg mb-3 overflow-hidden">
+                {image.image_url ? (
+                  <img 
+                    src={image.image_url} 
+                    alt={image.caption || 'Image de galerie'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Upload className="h-8 w-8 text-gray-500" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                {image.caption && <p className="text-white text-sm">{image.caption}</p>}
+                <div className="flex flex-wrap gap-1 text-xs">
+                  {image.category && <Badge variant="outline" className="border-blue-500 text-blue-400">{image.category}</Badge>}
+                  {image.photographer && <Badge variant="outline" className="border-green-500 text-green-400">{image.photographer}</Badge>}
+                  <Badge variant="outline" className="border-purple-500 text-purple-400">#{image.order_number}</Badge>
+                </div>
+                <div className="flex space-x-2 pt-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-yellow-500 text-yellow-500 flex-1"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditingItem(image);
+                      setFormData({...image});
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-red-500 text-red-500 flex-1"
+                    onClick={() => handleDelete('gallery_images', image.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
         return renderDashboard();
+      case 'galas':
+        return renderGalas();
+      case 'categories':
+        return renderCategories();
       case 'nominees':
         return renderNominees();
+      case 'panels':
+        return renderPanels();
+      case 'sponsors':
+        return renderSponsors();
+      case 'gallery':
+        return renderGallery();
       default:
-        return (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-xl">Section en développement</div>
-            <p className="text-gray-500 mt-2">Cette section sera bientôt disponible</p>
-          </div>
-        );
+        return renderDashboard();
     }
   };
 
@@ -406,6 +1305,23 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black">
+      {/* Barre de navigation admin */}
+      <div className="bg-black/90 backdrop-blur-md border-b border-yellow-500/20 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-white font-bold text-xl">Administration - Gala {selectedYear}</h1>
+            <Button
+              variant="outline"
+              className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
+              onClick={() => window.location.href = '/'}
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Retour au site
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}

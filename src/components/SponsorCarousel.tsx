@@ -1,7 +1,5 @@
 
-import React, { useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from 'react';
 import SponsorCard from './SponsorCard';
 
 interface Sponsor {
@@ -16,83 +14,95 @@ interface Sponsor {
 
 interface SponsorCarouselProps {
   sponsors: Sponsor[];
+  showAll?: boolean;
 }
 
-const SponsorCarousel = ({ sponsors }: SponsorCarouselProps) => {
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+const SponsorCarousel: React.FC<SponsorCarouselProps> = ({ sponsors, showAll = false }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+  // Tri des sponsors par niveau et ordre
+  const sortedSponsors = [...sponsors].sort((a, b) => {
+    const levelOrder = { 'PLATINUM': 1, 'GOLD': 2, 'SILVER': 3, 'BRONZE': 4 };
+    const aLevel = levelOrder[a.level] || 5;
+    const bLevel = levelOrder[b.level] || 5;
+    
+    if (aLevel !== bLevel) {
+      return aLevel - bLevel;
     }
-  };
+    
+    return (a.order_number || 999) - (b.order_number || 999);
+  });
 
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  };
-
-  // Auto-scroll every 2 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (scrollRef.current) {
-        const container = scrollRef.current;
-        const maxScroll = container.scrollWidth - container.clientWidth;
-        
-        if (container.scrollLeft >= maxScroll) {
-          // Reset to beginning
-          container.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          // Scroll to next
-          container.scrollBy({ left: 300, behavior: 'smooth' });
-        }
-      }
-    }, 2000);
+    if (!showAll && sortedSponsors.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => 
+          (prevIndex + 1) % sortedSponsors.length
+        );
+      }, 2000);
 
-    return () => clearInterval(interval);
-  }, []);
+      return () => clearInterval(interval);
+    }
+  }, [sortedSponsors.length, showAll]);
 
-  if (sponsors.length === 0) return null;
+  if (sortedSponsors.length === 0) {
+    return null;
+  }
+
+  if (showAll) {
+    // Affichage en grille pour la page sponsors
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {sortedSponsors.map((sponsor) => (
+          <SponsorCard key={sponsor.id} sponsor={sponsor} />
+        ))}
+      </div>
+    );
+  }
+
+  // Carrousel automatique pour la page d'accueil
+  const getVisibleSponsors = () => {
+    const visibleCount = Math.min(4, sortedSponsors.length);
+    const visible = [];
+    
+    for (let i = 0; i < visibleCount; i++) {
+      const index = (currentIndex + i) % sortedSponsors.length;
+      visible.push(sortedSponsors[index]);
+    }
+    
+    return visible;
+  };
 
   return (
-    <div className="relative">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-white">
-          Nos Partenaires
-        </h2>
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={scrollLeft}
-            className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+    <div className="relative overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 transition-all duration-500 ease-in-out">
+        {getVisibleSponsors().map((sponsor, index) => (
+          <div
+            key={`${sponsor.id}-${currentIndex}-${index}`}
+            className="transform transition-all duration-500 ease-in-out"
+            style={{
+              opacity: 1,
+              transform: 'translateX(0)',
+            }}
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={scrollRight}
-            className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+            <SponsorCard sponsor={sponsor} />
+          </div>
+        ))}
       </div>
       
-      <div 
-        ref={scrollRef}
-        className="flex space-x-4 overflow-x-auto scrollbar-hide pb-4"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {sponsors
-          .sort((a, b) => (a.order_number || 0) - (b.order_number || 0))
-          .map((sponsor) => (
-            <div key={sponsor.id} className="flex-shrink-0 w-72">
-              <SponsorCard sponsor={sponsor} />
-            </div>
-          ))}
+      {/* Indicateurs */}
+      <div className="flex justify-center space-x-2 mt-8">
+        {sortedSponsors.map((_, index) => (
+          <button
+            key={index}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentIndex 
+                ? 'bg-yellow-400 scale-110' 
+                : 'bg-gray-600 hover:bg-gray-500'
+            }`}
+            onClick={() => setCurrentIndex(index)}
+          />
+        ))}
       </div>
     </div>
   );

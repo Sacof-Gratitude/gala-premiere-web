@@ -7,6 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
   Trophy, 
   Users, 
   Award, 
@@ -22,24 +29,92 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGalaData } from "@/hooks/useGalaData";
+import { useToast } from "@/hooks/use-toast";
 
 const Admin = () => {
   const [selectedYear, setSelectedYear] = useState(2025);
   const [activeSection, setActiveSection] = useState('dashboard');
   const [isEditing, setIsEditing] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const { toast } = useToast();
 
-  const { data, isLoading } = useGalaData(selectedYear);
+  const { data, isLoading, refetch } = useGalaData(selectedYear);
 
   const sections = [
     { id: 'dashboard', label: 'Tableau de bord', icon: Settings },
     { id: 'galas', label: 'Galas', icon: Trophy },
-    { id: 'participants', label: 'Participants', icon: Users },
+    { id: 'nominees', label: 'Nominés', icon: Users },
     { id: 'categories', label: 'Catégories', icon: Award },
     { id: 'panels', label: 'Panels', icon: Calendar },
-    { id: 'sponsors', label: 'Partenaires', icon: Handshake },
+    { id: 'sponsors', label: 'Sponsors', icon: Handshake },
     { id: 'gallery', label: 'Galerie', icon: Image },
   ];
+
+  const handleCreate = async (table: string, data: any) => {
+    try {
+      const { error } = await supabase.from(table).insert([data]);
+      if (error) throw error;
+      
+      toast({
+        title: "Succès",
+        description: "Élément créé avec succès",
+      });
+      
+      refetch();
+      setIsEditing(false);
+      setFormData({});
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdate = async (table: string, id: string, data: any) => {
+    try {
+      const { error } = await supabase.from(table).update(data).eq('id', id);
+      if (error) throw error;
+      
+      toast({
+        title: "Succès",
+        description: "Élément mis à jour avec succès",
+      });
+      
+      refetch();
+      setIsEditing(false);
+      setEditingItem(null);
+      setFormData({});
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (table: string, id: string) => {
+    try {
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      if (error) throw error;
+      
+      toast({
+        title: "Succès",
+        description: "Élément supprimé avec succès",
+      });
+      
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -60,7 +135,7 @@ const Admin = () => {
             <div className="text-2xl font-bold text-white mb-1">
               {data?.categories.reduce((acc, cat) => acc + (cat.agencies?.length || 0), 0) || 0}
             </div>
-            <div className="text-sm text-gray-400">Participants</div>
+            <div className="text-sm text-gray-400">Nominés</div>
           </CardContent>
         </Card>
         
@@ -76,22 +151,185 @@ const Admin = () => {
           <CardContent className="p-6 text-center">
             <Handshake className="h-8 w-8 text-purple-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-white mb-1">{data?.sponsors.length || 0}</div>
-            <div className="text-sm text-gray-400">Partenaires</div>
+            <div className="text-sm text-gray-400">Sponsors</div>
           </CardContent>
         </Card>
       </div>
     </div>
   );
 
-  const renderParticipants = () => (
+  const renderNominees = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Gestion des Participants</h2>
-        <Button className="bg-yellow-500 text-black hover:bg-yellow-600">
+        <h2 className="text-2xl font-bold text-white">Gestion des Nominés</h2>
+        <Button 
+          className="bg-yellow-500 text-black hover:bg-yellow-600"
+          onClick={() => {
+            setIsEditing(true);
+            setEditingItem(null);
+            setFormData({
+              name: '',
+              description: '',
+              type: '',
+              location: '',
+              specialties: '',
+              achievements: '',
+              website: '',
+              vote_url: '',
+              team_size: '',
+              founded_year: '',
+              category_id: data?.categories[0]?.id || '',
+              is_winner: false
+            });
+          }}
+        >
           <Plus className="h-4 w-4 mr-2" />
-          Ajouter un participant
+          Ajouter un nominé
         </Button>
       </div>
+
+      {isEditing && (
+        <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">
+              {editingItem ? 'Modifier le nominé' : 'Ajouter un nominé'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Nom</Label>
+                <Input
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Type</Label>
+                <Input
+                  value={formData.type || ''}
+                  onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Localisation</Label>
+                <Input
+                  value={formData.location || ''}
+                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Catégorie</Label>
+                <Select
+                  value={formData.category_id || ''}
+                  onValueChange={(value) => setFormData({...formData, category_id: value})}
+                >
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                    <SelectValue placeholder="Choisir une catégorie" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    {data?.categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id} className="text-white">
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Description</Label>
+              <Textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="bg-gray-800 border-gray-600 text-white"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Spécialités</Label>
+                <Textarea
+                  value={formData.specialties || ''}
+                  onChange={(e) => setFormData({...formData, specialties: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                  rows={2}
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Réalisations</Label>
+                <Textarea
+                  value={formData.achievements || ''}
+                  onChange={(e) => setFormData({...formData, achievements: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-gray-300">Site web</Label>
+                <Input
+                  value={formData.website || ''}
+                  onChange={(e) => setFormData({...formData, website: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">URL de vote</Label>
+                <Input
+                  value={formData.vote_url || ''}
+                  onChange={(e) => setFormData({...formData, vote_url: e.target.value})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Taille équipe</Label>
+                <Input
+                  type="number"
+                  value={formData.team_size || ''}
+                  onChange={(e) => setFormData({...formData, team_size: parseInt(e.target.value) || null})}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => {
+                  if (editingItem) {
+                    handleUpdate('agencies', editingItem.id, formData);
+                  } else {
+                    handleCreate('agencies', formData);
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditingItem(null);
+                  setFormData({});
+                }}
+                className="border-gray-600 text-gray-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <div className="grid grid-cols-1 gap-4">
         {data?.categories.map(category => 
@@ -112,10 +350,24 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" className="border-yellow-500 text-yellow-500">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="border-yellow-500 text-yellow-500"
+                      onClick={() => {
+                        setIsEditing(true);
+                        setEditingItem(agency);
+                        setFormData({...agency});
+                      }}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" className="border-red-500 text-red-500">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="border-red-500 text-red-500"
+                      onClick={() => handleDelete('agencies', agency.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -132,8 +384,8 @@ const Admin = () => {
     switch (activeSection) {
       case 'dashboard':
         return renderDashboard();
-      case 'participants':
-        return renderParticipants();
+      case 'nominees':
+        return renderNominees();
       default:
         return (
           <div className="text-center py-12">
@@ -164,23 +416,18 @@ const Admin = () => {
               {/* Sélecteur d'année */}
               <div className="mb-4">
                 <Label className="text-gray-400 text-sm">Année du gala</Label>
-                <div className="flex space-x-1 mt-2">
-                  {[2023, 2024, 2025].map((year) => (
-                    <Button
-                      key={year}
-                      variant={selectedYear === year ? "default" : "outline"}
-                      size="sm"
-                      className={
-                        selectedYear === year 
-                          ? "bg-yellow-500 text-black" 
-                          : "border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
-                      }
-                      onClick={() => setSelectedYear(year)}
-                    >
-                      {year}
-                    </Button>
-                  ))}
-                </div>
+                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    {[2023, 2024, 2025].map((year) => (
+                      <SelectItem key={year} value={year.toString()} className="text-white">
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Menu de navigation */}

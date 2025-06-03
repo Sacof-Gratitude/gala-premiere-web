@@ -1,96 +1,122 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Star, Crown, Diamond, Award } from "lucide-react";
-
-interface Sponsor {
-  id: string;
-  name: string;
-  description?: string;
-  logo?: string;
-  website?: string;
-  level: 'GOLD' | 'SILVER' | 'BRONZE' | 'PLATINUM';
-  order_number?: number;
-}
+import { ExternalLink, Star, Crown, Award, Medal, Info } from "lucide-react";
 
 interface SponsorCardProps {
-  sponsor: Sponsor;
+  sponsor: {
+    id: string;
+    name: string;
+    description?: string;
+    logo?: string;
+    website?: string;
+    level: 'GOLD' | 'SILVER' | 'BRONZE' | 'PLATINUM';
+    order_number?: number;
+  };
 }
 
 const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor }) => {
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   const getLevelIcon = (level: string) => {
     switch (level) {
-      case 'PLATINUM': return <Diamond className="h-4 w-4" />;
-      case 'GOLD': return <Crown className="h-4 w-4" />;
-      case 'SILVER': return <Award className="h-4 w-4" />;
-      case 'BRONZE': return <Star className="h-4 w-4" />;
-      default: return <Star className="h-4 w-4" />;
+      case 'PLATINUM':
+        return <Crown className="h-4 w-4" />;
+      case 'GOLD':
+        return <Award className="h-4 w-4" />;
+      case 'SILVER':
+        return <Medal className="h-4 w-4" />;
+      case 'BRONZE':
+        return <Star className="h-4 w-4" />;
+      default:
+        return <Star className="h-4 w-4" />;
     }
   };
 
-  const getLevelStyle = (level: string) => {
+  const getLevelColor = (level: string) => {
     switch (level) {
-      case 'PLATINUM': 
-        return {
-          badge: 'bg-gradient-to-r from-gray-200 to-gray-400 text-gray-900 border-0 shadow-lg',
-          card: 'from-gray-400/20 to-gray-600/30 border-gray-400/40'
-        };
-      case 'GOLD': 
-        return {
-          badge: 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black border-0 shadow-lg',
-          card: 'from-yellow-400/20 to-yellow-600/30 border-yellow-400/40'
-        };
-      case 'SILVER': 
-        return {
-          badge: 'bg-gradient-to-r from-gray-300 to-gray-500 text-gray-900 border-0 shadow-lg',
-          card: 'from-gray-300/20 to-gray-500/30 border-gray-400/40'
-        };
-      case 'BRONZE': 
-        return {
-          badge: 'bg-gradient-to-r from-orange-400 to-orange-600 text-white border-0 shadow-lg',
-          card: 'from-orange-400/20 to-orange-600/30 border-orange-400/40'
-        };
-      default: 
-        return {
-          badge: 'bg-gradient-to-r from-gray-400 to-gray-600 text-white border-0',
-          card: 'from-gray-400/20 to-gray-600/30 border-gray-400/40'
-        };
+      case 'PLATINUM':
+        return 'from-slate-300 to-slate-500 text-slate-800';
+      case 'GOLD':
+        return 'from-yellow-300 to-yellow-500 text-yellow-800';
+      case 'SILVER':
+        return 'from-gray-300 to-gray-500 text-gray-800';
+      case 'BRONZE':
+        return 'from-orange-300 to-orange-500 text-orange-800';
+      default:
+        return 'from-gray-300 to-gray-500 text-gray-800';
     }
   };
 
-  const levelStyle = getLevelStyle(sponsor.level);
+  const getBorderColor = (level: string) => {
+    switch (level) {
+      case 'PLATINUM':
+        return 'border-slate-400/60 hover:border-slate-400/80';
+      case 'GOLD':
+        return 'border-yellow-400/60 hover:border-yellow-400/80';
+      case 'SILVER':
+        return 'border-gray-400/60 hover:border-gray-400/80';
+      case 'BRONZE':
+        return 'border-orange-400/60 hover:border-orange-400/80';
+      default:
+        return 'border-yellow-400/20 hover:border-yellow-400/40';
+    }
+  };
 
   return (
-    <Card className={`bg-gradient-to-br ${levelStyle.card} backdrop-blur-sm hover:scale-105 transition-all duration-300 group h-full`}>
-      <CardHeader className="text-center pb-4 relative">
-        <Badge className={`absolute top-2 right-2 ${levelStyle.badge} px-2 py-1 text-xs font-bold`}>
-          {getLevelIcon(sponsor.level)}
-          <span className="ml-1">{sponsor.level}</span>
-        </Badge>
+    <Card className={`bg-gradient-to-br from-black/40 to-black/60 backdrop-blur-sm transition-all duration-300 group cursor-pointer h-full ${getBorderColor(sponsor.level)}`}>
+      <CardHeader className="text-center pb-4">
+        <div className="mb-4 relative">
+          {sponsor.logo ? (
+            <div className="w-20 h-20 mx-auto rounded-lg overflow-hidden bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <img 
+                src={sponsor.logo} 
+                alt={sponsor.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="w-20 h-20 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-lg flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+              {getLevelIcon(sponsor.level)}
+            </div>
+          )}
+          
+          <Badge className={`absolute -top-2 -right-2 bg-gradient-to-r ${getLevelColor(sponsor.level)} font-bold text-xs`}>
+            {sponsor.level}
+          </Badge>
+        </div>
         
-        {sponsor.logo ? (
-          <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-lg p-2 flex items-center justify-center shadow-lg">
-            <img src={sponsor.logo} alt={sponsor.name} className="max-w-full max-h-full object-contain" />
-          </div>
-        ) : (
-          <div className={`w-20 h-20 bg-gradient-to-br ${levelStyle.card} rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg`}>
-            {getLevelIcon(sponsor.level)}
-          </div>
-        )}
-        
-        <CardTitle className="text-white group-hover:text-yellow-400 transition-colors text-lg">
+        <CardTitle className="text-white group-hover:text-yellow-400 transition-colors text-lg leading-tight">
           {sponsor.name}
         </CardTitle>
         
         {sponsor.description && (
-          <CardDescription className="text-gray-300 text-sm">
-            {sponsor.description}
+          <CardDescription className="text-gray-300 text-sm relative">
+            {showFullDescription ? sponsor.description : truncateText(sponsor.description, 80)}
+            {sponsor.description.length > 80 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-0 h-auto text-yellow-400 hover:text-yellow-300 ml-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowFullDescription(!showFullDescription);
+                }}
+              >
+                <Info className="h-3 w-3" />
+              </Button>
+            )}
           </CardDescription>
         )}
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {sponsor.website && (
           <Button 
@@ -99,7 +125,7 @@ const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor }) => {
             className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-200"
             onClick={() => window.open(sponsor.website, '_blank')}
           >
-            Visiter le site
+            Visiter le site web
             <ExternalLink className="ml-2 h-4 w-4" />
           </Button>
         )}

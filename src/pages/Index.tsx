@@ -15,7 +15,7 @@ import Footer from '@/components/Footer';
 import Admin from './Admin';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, MapPin, Trophy, Sparkles, Clock, Users } from "lucide-react";
+import { CalendarDays, MapPin, Trophy, Sparkles, Clock, Users, ArrowLeft } from "lucide-react";
 
 const Index = () => {
   const [selectedYear, setSelectedYear] = useState(2025);
@@ -74,6 +74,15 @@ const Index = () => {
   if (activeTab === 'admin') {
     return <Admin />;
   }
+
+  const handleCategoryClick = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setActiveTab('nomines');
+  };
+
+  const getCurrentCategory = () => {
+    return categories.find(c => c.id === selectedCategory);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -136,7 +145,7 @@ const Index = () => {
               <WinnersBanner winners={winners} galaYear={selectedYear} />
             )}
 
-            {/* Stats Section - Plus compact */}
+            {/* Stats Section */}
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto">
               <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 border-yellow-500/30">
                 <CardContent className="p-3 text-center">
@@ -154,7 +163,7 @@ const Index = () => {
                   <div className="text-sm font-bold text-white mb-1">
                     {filteredParticipants.length}
                   </div>
-                  <div className="text-xs text-gray-400">Participants</div>
+                  <div className="text-xs text-gray-400">Nominés</div>
                 </CardContent>
               </Card>
               
@@ -176,13 +185,17 @@ const Index = () => {
                   Catégories du Gala {selectedYear}
                 </h2>
                 <p className="text-gray-400">
-                  Découvrez les différentes catégories et leurs participants
+                  Découvrez les différentes catégories et leurs nominés
                 </p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {categories.map((category) => (
-                  <CategoryCard key={category.id} category={category} />
+                  <CategoryCard 
+                    key={category.id} 
+                    category={category} 
+                    onViewNominees={handleCategoryClick}
+                  />
                 ))}
               </div>
             </section>
@@ -197,15 +210,46 @@ const Index = () => {
         );
 
       case 'nomines':
+        const currentCategory = getCurrentCategory();
         return (
           <div className="space-y-8">
+            {/* Category Description */}
+            {currentCategory && (
+              <div className="bg-gradient-to-r from-yellow-500/10 to-yellow-600/10 border border-yellow-500/20 rounded-lg p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                      {currentCategory.name}
+                    </h2>
+                    <p className="text-gray-300 text-lg mb-4">
+                      {currentCategory.description}
+                    </p>
+                    {currentCategory.criteria && (
+                      <div className="bg-black/20 rounded-lg p-4 border border-yellow-500/20">
+                        <h3 className="text-yellow-400 font-semibold mb-2">Critères d'évaluation:</h3>
+                        <p className="text-gray-300 text-sm">{currentCategory.criteria}</p>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedCategory(null)}
+                    className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black ml-4"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Retour
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                  Participants {selectedYear}
+                  Nominés {selectedYear}
                 </h2>
                 <p className="text-gray-400">
-                  {filteredParticipants.length} participants en compétition
+                  {filteredParticipants.length} nominés en compétition
                 </p>
               </div>
               
@@ -258,7 +302,11 @@ const Index = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
+                <CategoryCard 
+                  key={category.id} 
+                  category={category} 
+                  onViewNominees={handleCategoryClick}
+                />
               ))}
             </div>
           </div>
@@ -316,10 +364,10 @@ const Index = () => {
               <section className="space-y-6">
                 <div className="text-center">
                   <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                    Nos Partenaires {selectedYear}
+                    Nos Sponsors {selectedYear}
                   </h2>
                   <p className="text-gray-400">
-                    Merci à nos partenaires qui rendent cet événement possible
+                    Merci à nos sponsors qui rendent cet événement possible
                   </p>
                 </div>
                 

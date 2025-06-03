@@ -25,6 +25,11 @@ const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor }) => {
     return text.substring(0, maxLength) + '...';
   };
 
+  const truncateName = (text: string, maxLength: number = 30) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   const getLevelIcon = (level: string) => {
     switch (level) {
       case 'PLATINUM':
@@ -70,12 +75,15 @@ const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor }) => {
     }
   };
 
+  // Limite de caractères pour la description (2 lignes environ)
+  const descriptionLimit = 80;
+
   return (
-    <Card className={`bg-gradient-to-br from-black/40 to-black/60 backdrop-blur-sm transition-all duration-300 group cursor-pointer h-full ${getBorderColor(sponsor.level)}`}>
-      <CardHeader className="text-center pb-4">
+    <Card className={`bg-gradient-to-br from-black/40 to-black/60 backdrop-blur-sm transition-all duration-300 group cursor-pointer h-full flex flex-col ${getBorderColor(sponsor.level)}`}>
+      <CardHeader className="text-center pb-4 flex-shrink-0">
         <div className="mb-4 relative">
           {sponsor.logo ? (
-            <div className="w-20 h-20 mx-auto rounded-lg overflow-hidden bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <div className="w-16 h-16 mx-auto rounded-lg overflow-hidden bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               <img 
                 src={sponsor.logo} 
                 alt={sponsor.name}
@@ -83,7 +91,7 @@ const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor }) => {
               />
             </div>
           ) : (
-            <div className="w-20 h-20 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-lg flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-lg flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
               {getLevelIcon(sponsor.level)}
             </div>
           )}
@@ -93,18 +101,23 @@ const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor }) => {
           </Badge>
         </div>
         
-        <CardTitle className="text-white group-hover:text-yellow-400 transition-colors text-lg leading-tight">
-          {sponsor.name}
+        <CardTitle 
+          className="text-white group-hover:text-yellow-400 transition-colors text-lg leading-tight line-clamp-1"
+          title={sponsor.name}
+        >
+          {truncateName(sponsor.name)}
         </CardTitle>
         
         {sponsor.description && (
-          <CardDescription className="text-gray-300 text-sm relative">
-            {showFullDescription ? sponsor.description : truncateText(sponsor.description, 80)}
-            {sponsor.description.length > 80 && (
+          <CardDescription className="text-gray-300 text-sm relative min-h-[2.5rem] flex flex-col justify-start">
+            <div className="line-clamp-2 leading-5">
+              {showFullDescription ? sponsor.description : truncateText(sponsor.description, descriptionLimit)}
+            </div>
+            {sponsor.description.length > descriptionLimit && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="p-0 h-auto text-yellow-400 hover:text-yellow-300 ml-1"
+                className="p-0 h-auto text-yellow-400 hover:text-yellow-300 mt-1 self-center"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowFullDescription(!showFullDescription);
@@ -117,13 +130,16 @@ const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor }) => {
         )}
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="mt-auto pt-0 flex-shrink-0">
         {sponsor.website && (
           <Button 
             variant="outline" 
             size="sm" 
             className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-200"
-            onClick={() => window.open(sponsor.website, '_blank')}
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(sponsor.website, '_blank');
+            }}
           >
             Visiter le site web
             <ExternalLink className="ml-2 h-4 w-4" />

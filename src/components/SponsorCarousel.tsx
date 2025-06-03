@@ -1,6 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import SponsorCard from './SponsorCard';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 interface Sponsor {
   id: string;
@@ -19,6 +21,7 @@ interface SponsorCarouselProps {
 
 const SponsorCarousel: React.FC<SponsorCarouselProps> = ({ sponsors, showAll = false }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(4);
 
   // Tri des sponsors par niveau et ordre
   const sortedSponsors = [...sponsors].sort((a, b) => {
@@ -33,17 +36,38 @@ const SponsorCarousel: React.FC<SponsorCarouselProps> = ({ sponsors, showAll = f
     return (a.order_number || 999) - (b.order_number || 999);
   });
 
+  // Responsive items per view
   useEffect(() => {
-    if (!showAll && sortedSponsors.length > 0) {
+    const updateItemsPerView = () => {
+      if (window.innerWidth < 640) {
+        setItemsPerView(1);
+      } else if (window.innerWidth < 768) {
+        setItemsPerView(2);
+      } else if (window.innerWidth < 1024) {
+        setItemsPerView(3);
+      } else {
+        setItemsPerView(4);
+      }
+    };
+
+    updateItemsPerView();
+    window.addEventListener('resize', updateItemsPerView);
+    return () => window.removeEventListener('resize', updateItemsPerView);
+  }, []);
+
+  // Auto-slide pour le carrousel
+  useEffect(() => {
+    if (!showAll && sortedSponsors.length > itemsPerView) {
       const interval = setInterval(() => {
-        setCurrentIndex((prevIndex) => 
-          (prevIndex + 1) % sortedSponsors.length
-        );
-      }, 2000);
+        setCurrentIndex((prevIndex) => {
+          const maxIndex = Math.max(0, sortedSponsors.length - itemsPerView);
+          return prevIndex >= maxIndex ? 0 : prevIndex + 1;
+        });
+      }, 3000);
 
       return () => clearInterval(interval);
     }
-  }, [sortedSponsors.length, showAll]);
+  }, [sortedSponsors.length, showAll, itemsPerView]);
 
   if (sortedSponsors.length === 0) {
     return null;
@@ -52,7 +76,7 @@ const SponsorCarousel: React.FC<SponsorCarouselProps> = ({ sponsors, showAll = f
   if (showAll) {
     // Affichage en grille pour la page sponsors
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {sortedSponsors.map((sponsor) => (
           <SponsorCard key={sponsor.id} sponsor={sponsor} />
         ))}
@@ -60,50 +84,86 @@ const SponsorCarousel: React.FC<SponsorCarouselProps> = ({ sponsors, showAll = f
     );
   }
 
-  // Carrousel automatique pour la page d'accueil
-  const getVisibleSponsors = () => {
-    const visibleCount = Math.min(4, sortedSponsors.length);
-    const visible = [];
-    
-    for (let i = 0; i < visibleCount; i++) {
-      const index = (currentIndex + i) % sortedSponsors.length;
-      visible.push(sortedSponsors[index]);
-    }
-    
-    return visible;
+  const maxIndex = Math.max(0, sortedSponsors.length - itemsPerView);
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex < maxIndex;
+
+  const goToPrevious = () => {
+    setCurrentIndex(Math.max(0, currentIndex - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex(Math.min(maxIndex, currentIndex + 1));
   };
 
   return (
-    <div className="relative overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 transition-all duration-500 ease-in-out">
-        {getVisibleSponsors().map((sponsor, index) => (
-          <div
-            key={`${sponsor.id}-${currentIndex}-${index}`}
-            className="transform transition-all duration-500 ease-in-out"
-            style={{
-              opacity: 1,
-              transform: 'translateX(0)',
-            }}
+    <div className="relative">
+      {/* Navigation buttons */}
+      {sortedSponsors.length > itemsPerView && (
+        <>
+          <Button
+            variant="outline"
+            size="icon"
+            className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/80 border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black -ml-4 ${
+              !canGoPrev ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            onClick={goToPrevious}
+            disabled={!canGoPrev}
           >
-            <SponsorCard sponsor={sponsor} />
-          </div>
-        ))}
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="icon"
+            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/80 border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black -mr-4 ${
+              !canGoNext ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            onClick={goToNext}
+            disabled={!canGoNext}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </>
+      )}
+
+      {/* Carrousel container */}
+      <div className="overflow-hidden">
+        <div 
+          className="flex transition-transform duration-500 ease-in-out gap-6"
+          style={{
+            transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
+            width: `${(sortedSponsors.length / itemsPerView) * 100}%`
+          }}
+        >
+          {sortedSponsors.map((sponsor) => (
+            <div
+              key={sponsor.id}
+              className="flex-shrink-0"
+              style={{ width: `${100 / sortedSponsors.length}%` }}
+            >
+              <SponsorCard sponsor={sponsor} />
+            </div>
+          ))}
+        </div>
       </div>
       
       {/* Indicateurs */}
-      <div className="flex justify-center space-x-2 mt-8">
-        {sortedSponsors.map((_, index) => (
-          <button
-            key={index}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentIndex 
-                ? 'bg-yellow-400 scale-110' 
-                : 'bg-gray-600 hover:bg-gray-500'
-            }`}
-            onClick={() => setCurrentIndex(index)}
-          />
-        ))}
-      </div>
+      {sortedSponsors.length > itemsPerView && (
+        <div className="flex justify-center space-x-2 mt-6">
+          {Array.from({ length: maxIndex + 1 }, (_, index) => (
+            <button
+              key={index}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === currentIndex 
+                  ? 'bg-yellow-400 w-4' 
+                  : 'bg-gray-600 hover:bg-gray-500'
+              }`}
+              onClick={() => setCurrentIndex(index)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

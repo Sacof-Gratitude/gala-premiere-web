@@ -33,6 +33,10 @@ const Navigation = ({ selectedYear, onYearChange, activeTab, onTabChange }: Navi
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const handleAdminClick = () => {
+    window.location.href = '/admin';
+  };
+
   return (
     <nav className="bg-black/90 backdrop-blur-md border-b border-yellow-500/20 sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -102,7 +106,7 @@ const Navigation = ({ selectedYear, onYearChange, activeTab, onTabChange }: Navi
               variant="outline"
               size="sm"
               className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
-              onClick={() => onTabChange('admin')}
+              onClick={handleAdminClick}
             >
               <LogIn className="h-4 w-4 mr-2" />
               Admin
@@ -177,7 +181,7 @@ const Navigation = ({ selectedYear, onYearChange, activeTab, onTabChange }: Navi
                 variant="outline"
                 className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black justify-start w-full"
                 onClick={() => {
-                  onTabChange('admin');
+                  handleAdminClick();
                   setIsMobileMenuOpen(false);
                 }}
               >

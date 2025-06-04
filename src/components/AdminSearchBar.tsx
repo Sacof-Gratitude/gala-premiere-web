@@ -58,6 +58,21 @@ const AdminSearchBar: React.FC<AdminSearchBarProps> = ({
     const suggestions: SearchSuggestion[] = [];
 
     switch (activeSection) {
+      case 'galas':
+        if (data.gala) {
+          if (data.gala.title.toLowerCase().includes(term) || 
+              data.gala.description?.toLowerCase().includes(term) ||
+              data.gala.venue?.toLowerCase().includes(term)) {
+            suggestions.push({
+              id: data.gala.id,
+              title: data.gala.title,
+              subtitle: `${data.gala.year} - ${data.gala.venue}`,
+              type: 'gala'
+            });
+          }
+        }
+        break;
+
       case 'categories':
         data.categories?.forEach((category: any) => {
           if (category.name.toLowerCase().includes(term) || 

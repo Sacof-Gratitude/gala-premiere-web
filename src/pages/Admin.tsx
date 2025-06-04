@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,24 +40,86 @@ const Admin = () => {
     setEditingItem(null);
   };
 
+  // Fonction utilitaire pour logger les erreurs Supabase
+  const logSupabaseError = (operation: string, entity: string, error: any) => {
+    console.error(`❌ Erreur Supabase - ${operation} ${entity}:`, {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+      fullError: error
+    });
+  };
+
+  // Fonction utilitaire pour valider les données avant envoi
+  const validateFormData = (section: string, data: any): string | null => {
+    if (!data || Object.keys(data).length === 0) {
+      return "Veuillez remplir tous les champs requis";
+    }
+
+    switch (section) {
+      case 'galas':
+        if (!data.title || !data.description || !data.year || !data.venue) {
+          return "Titre, description, année et lieu sont requis";
+        }
+        break;
+      case 'categories':
+        if (!data.name || !data.description || !data.criteria || !data.order_number || !data.gala_id) {
+          return "Nom, description, critères, numéro d'ordre et gala sont requis";
+        }
+        break;
+      case 'nominees':
+        if (!data.name || !data.description || !data.type || !data.location || !data.category_id) {
+          return "Nom, description, type, localisation et catégorie sont requis";
+        }
+        break;
+      case 'panels':
+        if (!data.title || !data.description || !data.theme || !data.moderator_name || !data.order_number || !data.gala_id) {
+          return "Titre, description, thème, modérateur, numéro d'ordre et gala sont requis";
+        }
+        break;
+      case 'sponsors':
+        if (!data.name || !data.level || !data.gala_id) {
+          return "Nom, niveau et gala sont requis";
+        }
+        break;
+      case 'gallery':
+        if (!data.image_url || !data.gala_id) {
+          return "URL de l'image et gala sont requis";
+        }
+        break;
+    }
+    return null;
+  };
+
   const handleSave = async () => {
-    if (!formData || Object.keys(formData).length === 0) {
+    console.log(`🔄 Début de l'opération ${editingItem ? 'mise à jour' : 'création'} pour ${activeSection}`);
+    
+    // Validation des données
+    const validationError = validateFormData(activeSection, formData);
+    if (validationError) {
+      console.warn("⚠️ Validation échouée:", validationError);
       toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs requis",
+        title: "Erreur de validation",
+        description: validationError,
         variant: "destructive"
       });
       return;
     }
 
     setIsLoading(true);
+    let operationSuccess = false;
+    
     try {
       let result;
+      const operation = editingItem ? 'UPDATE' : 'INSERT';
+      
+      console.log(`📝 Données envoyées pour ${operation}:`, formData);
       
       switch (activeSection) {
         case 'galas':
           if (editingItem) {
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
               .from('galas')
               .update({
                 title: formData.title,
@@ -75,10 +136,11 @@ const Admin = () => {
                 voting_start_date: formData.voting_start_date,
                 voting_end_date: formData.voting_end_date
               })
-              .eq('id', editingItem.id);
-            result = { error };
+              .eq('id', editingItem.id)
+              .select();
+            result = { data: updatedData, error };
           } else {
-            const { error } = await supabase
+            const { data: insertedData, error } = await supabase
               .from('galas')
               .insert({
                 title: formData.title,
@@ -94,14 +156,15 @@ const Admin = () => {
                 nomination_end_date: formData.nomination_end_date,
                 voting_start_date: formData.voting_start_date,
                 voting_end_date: formData.voting_end_date
-              });
-            result = { error };
+              })
+              .select();
+            result = { data: insertedData, error };
           }
           break;
 
         case 'categories':
           if (editingItem) {
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
               .from('categories')
               .update({
                 name: formData.name,
@@ -110,10 +173,11 @@ const Admin = () => {
                 order_number: parseInt(formData.order_number),
                 gala_id: formData.gala_id
               })
-              .eq('id', editingItem.id);
-            result = { error };
+              .eq('id', editingItem.id)
+              .select();
+            result = { data: updatedData, error };
           } else {
-            const { error } = await supabase
+            const { data: insertedData, error } = await supabase
               .from('categories')
               .insert({
                 name: formData.name,
@@ -121,14 +185,15 @@ const Admin = () => {
                 criteria: formData.criteria,
                 order_number: parseInt(formData.order_number),
                 gala_id: formData.gala_id
-              });
-            result = { error };
+              })
+              .select();
+            result = { data: insertedData, error };
           }
           break;
 
         case 'nominees':
           if (editingItem) {
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
               .from('agencies')
               .update({
                 name: formData.name,
@@ -145,10 +210,11 @@ const Admin = () => {
                 is_winner: formData.is_winner || false,
                 category_id: formData.category_id
               })
-              .eq('id', editingItem.id);
-            result = { error };
+              .eq('id', editingItem.id)
+              .select();
+            result = { data: updatedData, error };
           } else {
-            const { error } = await supabase
+            const { data: insertedData, error } = await supabase
               .from('agencies')
               .insert({
                 name: formData.name,
@@ -164,14 +230,15 @@ const Admin = () => {
                 founded_year: formData.founded_year ? parseInt(formData.founded_year) : null,
                 is_winner: formData.is_winner || false,
                 category_id: formData.category_id
-              });
-            result = { error };
+              })
+              .select();
+            result = { data: insertedData, error };
           }
           break;
 
         case 'panels':
           if (editingItem) {
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
               .from('panels')
               .update({
                 title: formData.title,
@@ -185,10 +252,11 @@ const Admin = () => {
                 order_number: parseInt(formData.order_number),
                 gala_id: formData.gala_id
               })
-              .eq('id', editingItem.id);
-            result = { error };
+              .eq('id', editingItem.id)
+              .select();
+            result = { data: updatedData, error };
           } else {
-            const { error } = await supabase
+            const { data: insertedData, error } = await supabase
               .from('panels')
               .insert({
                 title: formData.title,
@@ -201,14 +269,15 @@ const Admin = () => {
                 end_time: formData.end_time,
                 order_number: parseInt(formData.order_number),
                 gala_id: formData.gala_id
-              });
-            result = { error };
+              })
+              .select();
+            result = { data: insertedData, error };
           }
           break;
 
         case 'sponsors':
           if (editingItem) {
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
               .from('sponsors')
               .update({
                 name: formData.name,
@@ -219,10 +288,11 @@ const Admin = () => {
                 order_number: formData.order_number ? parseInt(formData.order_number) : null,
                 gala_id: formData.gala_id
               })
-              .eq('id', editingItem.id);
-            result = { error };
+              .eq('id', editingItem.id)
+              .select();
+            result = { data: updatedData, error };
           } else {
-            const { error } = await supabase
+            const { data: insertedData, error } = await supabase
               .from('sponsors')
               .insert({
                 name: formData.name,
@@ -232,14 +302,15 @@ const Admin = () => {
                 website: formData.website,
                 order_number: formData.order_number ? parseInt(formData.order_number) : null,
                 gala_id: formData.gala_id
-              });
-            result = { error };
+              })
+              .select();
+            result = { data: insertedData, error };
           }
           break;
 
         case 'gallery':
           if (editingItem) {
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
               .from('gallery_images')
               .update({
                 image_url: formData.image_url,
@@ -249,10 +320,11 @@ const Admin = () => {
                 order_number: formData.order_number ? parseInt(formData.order_number) : null,
                 gala_id: formData.gala_id
               })
-              .eq('id', editingItem.id);
-            result = { error };
+              .eq('id', editingItem.id)
+              .select();
+            result = { data: updatedData, error };
           } else {
-            const { error } = await supabase
+            const { data: insertedData, error } = await supabase
               .from('gallery_images')
               .insert({
                 image_url: formData.image_url,
@@ -261,16 +333,30 @@ const Admin = () => {
                 photographer: formData.photographer,
                 order_number: formData.order_number ? parseInt(formData.order_number) : null,
                 gala_id: formData.gala_id
-              });
-            result = { error };
+              })
+              .select();
+            result = { data: insertedData, error };
           }
           break;
       }
 
+      // Vérification critique de l'erreur
       if (result?.error) {
-        throw result.error;
+        logSupabaseError(operation, activeSection, result.error);
+        throw new Error(result.error.message || `Erreur lors de l'opération ${operation} sur ${activeSection}`);
       }
 
+      // Vérification que des données ont été retournées
+      if (!result?.data || result.data.length === 0) {
+        const errorMsg = `Aucune donnée retournée après ${operation} sur ${activeSection}`;
+        console.error("❌", errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      console.log(`✅ ${operation} réussi sur ${activeSection}:`, result.data);
+      operationSuccess = true;
+
+      // Notification de succès SEULEMENT si l'opération a réussi
       toast({
         title: "Succès",
         description: `${editingItem ? 'Modification' : 'Ajout'} effectué avec succès`,
@@ -278,17 +364,20 @@ const Admin = () => {
 
       setIsDialogOpen(false);
       resetForm();
-      refetch();
+      await refetch();
       
     } catch (error: any) {
-      console.error('Erreur lors de la sauvegarde:', error);
+      operationSuccess = false;
+      logSupabaseError(editingItem ? 'UPDATE' : 'INSERT', activeSection, error);
+      
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la sauvegarde",
+        description: error.message || `Une erreur est survenue lors de ${editingItem ? 'la modification' : 'l\'ajout'}`,
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
+      console.log(`🏁 Fin de l'opération. Succès: ${operationSuccess}`);
     }
   };
 
@@ -297,44 +386,62 @@ const Admin = () => {
       return;
     }
 
+    console.log(`🗑️ Début de suppression pour ${activeSection}:`, item.id);
     setIsLoading(true);
+    let deleteSuccess = false;
+    
     try {
       let result;
       
       switch (activeSection) {
         case 'galas':
-          result = await supabase.from('galas').delete().eq('id', item.id);
+          result = await supabase.from('galas').delete().eq('id', item.id).select();
           break;
         case 'categories':
-          result = await supabase.from('categories').delete().eq('id', item.id);
+          result = await supabase.from('categories').delete().eq('id', item.id).select();
           break;
         case 'nominees':
-          result = await supabase.from('agencies').delete().eq('id', item.id);
+          result = await supabase.from('agencies').delete().eq('id', item.id).select();
           break;
         case 'panels':
-          result = await supabase.from('panels').delete().eq('id', item.id);
+          result = await supabase.from('panels').delete().eq('id', item.id).select();
           break;
         case 'sponsors':
-          result = await supabase.from('sponsors').delete().eq('id', item.id);
+          result = await supabase.from('sponsors').delete().eq('id', item.id).select();
           break;
         case 'gallery':
-          result = await supabase.from('gallery_images').delete().eq('id', item.id);
+          result = await supabase.from('gallery_images').delete().eq('id', item.id).select();
           break;
       }
 
+      // Vérification critique de l'erreur
       if (result?.error) {
-        throw result.error;
+        logSupabaseError('DELETE', activeSection, result.error);
+        throw new Error(result.error.message || `Erreur lors de la suppression de ${activeSection}`);
       }
 
+      // Vérification que l'élément a été supprimé
+      if (!result?.data || result.data.length === 0) {
+        const errorMsg = `Aucune donnée supprimée pour ${activeSection}`;
+        console.error("❌", errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      console.log(`✅ Suppression réussie sur ${activeSection}:`, result.data);
+      deleteSuccess = true;
+
+      // Notification de succès SEULEMENT si la suppression a réussi
       toast({
         title: "Succès",
         description: "Élément supprimé avec succès",
       });
 
-      refetch();
+      await refetch();
       
     } catch (error: any) {
-      console.error('Erreur lors de la suppression:', error);
+      deleteSuccess = false;
+      logSupabaseError('DELETE', activeSection, error);
+      
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue lors de la suppression",
@@ -342,6 +449,7 @@ const Admin = () => {
       });
     } finally {
       setIsLoading(false);
+      console.log(`🏁 Fin de suppression. Succès: ${deleteSuccess}`);
     }
   };
 
@@ -834,7 +942,6 @@ const Admin = () => {
 
   const handleSearchSelect = (item: any) => {
     console.log('Élément sélectionné:', item);
-    // Ici vous pouvez ajouter la logique pour naviguer vers l'élément ou le mettre en surbrillance
   };
 
   const renderContent = () => {

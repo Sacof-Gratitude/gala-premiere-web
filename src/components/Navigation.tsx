@@ -7,7 +7,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Trophy, Users, Award, Calendar, Image, Handshake, LogIn, ChevronDown, Menu, X } from "lucide-react";
+import { Trophy, Users, Award, Calendar, Image, Handshake, ChevronDown, Menu, X, LogOut } from "lucide-react";
+import AdminLogin from './AdminLogin';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from "@/hooks/use-toast";
 
 interface NavigationProps {
   selectedYear: number;
@@ -18,6 +21,8 @@ interface NavigationProps {
 
 const Navigation = ({ selectedYear, onYearChange, activeTab, onTabChange }: NavigationProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isAdmin, signOut } = useAuth();
+  const { toast } = useToast();
 
   const tabs = [
     { id: 'nomines', label: 'Nominés', icon: Users },
@@ -33,8 +38,33 @@ const Navigation = ({ selectedYear, onYearChange, activeTab, onTabChange }: Navi
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleAdminClick = () => {
-    window.location.href = '/admin';
+  const handleAdminAccess = () => {
+    if (isAdmin) {
+      window.location.href = '/admin';
+    }
+  };
+
+  const handleSuccessfulLogin = () => {
+    // Attendre un peu que l'état soit mis à jour
+    setTimeout(() => {
+      window.location.href = '/admin';
+    }, 500);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la déconnexion",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -102,15 +132,30 @@ const Navigation = ({ selectedYear, onYearChange, activeTab, onTabChange }: Navi
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
-              onClick={handleAdminClick}
-            >
-              <LogIn className="h-4 w-4 mr-2" />
-              Admin
-            </Button>
+            {/* Auth Section */}
+            {user && isAdmin ? (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
+                  onClick={handleAdminAccess}
+                >
+                  Interface Admin
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Déconnexion
+                </Button>
+              </div>
+            ) : (
+              <AdminLogin onSuccessfulLogin={handleSuccessfulLogin} />
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -177,17 +222,39 @@ const Navigation = ({ selectedYear, onYearChange, activeTab, onTabChange }: Navi
                 );
               })}
               
-              <Button
-                variant="outline"
-                className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black justify-start w-full"
-                onClick={() => {
-                  handleAdminClick();
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <LogIn className="h-4 w-4 mr-3" />
-                Admin
-              </Button>
+              {/* Mobile Auth Section */}
+              {user && isAdmin ? (
+                <>
+                  <Button
+                    variant="outline"
+                    className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black justify-start w-full"
+                    onClick={() => {
+                      handleAdminAccess();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    Interface Admin
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white justify-start w-full"
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-3" />
+                    Déconnexion
+                  </Button>
+                </>
+              ) : (
+                <div className="w-full">
+                  <AdminLogin onSuccessfulLogin={() => {
+                    handleSuccessfulLogin();
+                    setIsMobileMenuOpen(false);
+                  }} />
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, CalendarIcon, Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+import { Calendar, CalendarIcon, Plus, Edit2, Trash2, Loader2, Home } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -16,6 +16,8 @@ import { useGalaData } from "@/hooks/useGalaData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AdminSearchBar from "@/components/AdminSearchBar";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from '@/hooks/useAuth';
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState('galas');
@@ -25,6 +27,7 @@ const Admin = () => {
   const [formData, setFormData] = useState<any>({});
   const { data, refetch } = useGalaData();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
   const sections = [
     { id: 'galas', name: 'Galas', icon: Calendar },
@@ -38,6 +41,27 @@ const Admin = () => {
   const resetForm = () => {
     setFormData({});
     setEditingItem(null);
+  };
+
+  const handleBackToUserInterface = () => {
+    window.location.href = '/';
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès",
+      });
+      window.location.href = '/';
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la déconnexion",
+        variant: "destructive"
+      });
+    }
   };
 
   // Fonction utilitaire pour logger les erreurs Supabase
@@ -461,7 +485,6 @@ const Admin = () => {
 
   const handleAdd = () => {
     resetForm();
-    // Pré-remplir avec des valeurs par défaut selon la section
     const defaultData: any = {};
     
     if (data?.gala?.id) {
@@ -1252,80 +1275,104 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-yellow-400">Administration</h1>
-        
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="lg:w-64">
-            <nav className="space-y-2">
-              {sections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-yellow-500 text-black'
-                        : 'text-gray-300 hover:bg-gray-700'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{section.name}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {renderContent()}
-          </div>
-        </div>
-
-        {/* Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="bg-gray-900 border-gray-600 text-white max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingItem ? `Modifier ${activeSection}` : `Ajouter ${activeSection}`}
-              </DialogTitle>
-              <DialogDescription className="text-gray-400">
-                {editingItem 
-                  ? `Modifiez les informations de cet élément de la section ${activeSection}.`
-                  : `Ajoutez un nouvel élément à la section ${activeSection}.`
-                }
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              {renderForm()}
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Annuler
-                </Button>
-                <Button 
-                  onClick={handleSave} 
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sauvegarde...
-                    </>
-                  ) : (
-                    'Sauvegarder'
-                  )}
-                </Button>
-              </div>
+    <ProtectedRoute requireAdmin={true}>
+      <div className="min-h-screen bg-black text-white">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header avec boutons de navigation */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
+            <h1 className="text-3xl font-bold text-yellow-400">Administration</h1>
+            
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+              <Button
+                variant="outline"
+                className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                onClick={handleBackToUserInterface}
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Retour à l'interface utilisateur
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                onClick={handleSignOut}
+              >
+                Déconnexion
+              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Sidebar */}
+            <div className="lg:w-64">
+              <nav className="space-y-2">
+                {sections.map((section) => {
+                  const Icon = section.icon;
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id)}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                        activeSection === section.id
+                          ? 'bg-yellow-500 text-black'
+                          : 'text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{section.name}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1">
+              {renderContent()}
+            </div>
+          </div>
+
+          {/* Dialog */}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="bg-gray-900 border-gray-600 text-white max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingItem ? `Modifier ${activeSection}` : `Ajouter ${activeSection}`}
+                </DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  {editingItem 
+                    ? `Modifiez les informations de cet élément de la section ${activeSection}.`
+                    : `Ajoutez un nouvel élément à la section ${activeSection}.`
+                  }
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6">
+                {renderForm()}
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Annuler
+                  </Button>
+                  <Button 
+                    onClick={handleSave} 
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sauvegarde...
+                      </>
+                    ) : (
+                      'Sauvegarder'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 

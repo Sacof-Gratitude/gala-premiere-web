@@ -404,7 +404,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       gala_status:
@@ -414,7 +417,7 @@ export type Database = {
         | "ENDED"
         | "ARCHIVED"
       sponsor_level: "PLATINUM" | "GOLD" | "SILVER" | "BRONZE"
-      user_role: "USER" | "ADMIN" | "SUPER_ADMIN"
+      user_role: "USER" | "ADMIN" | "SUPER_ADMIN" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -538,7 +541,7 @@ export const Constants = {
         "ARCHIVED",
       ],
       sponsor_level: ["PLATINUM", "GOLD", "SILVER", "BRONZE"],
-      user_role: ["USER", "ADMIN", "SUPER_ADMIN"],
+      user_role: ["USER", "ADMIN", "SUPER_ADMIN", "admin"],
     },
   },
 } as const

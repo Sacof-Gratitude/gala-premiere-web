@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, CalendarIcon, Plus, Edit2, Trash2, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1293,6 +1293,12 @@ const Admin = () => {
               <DialogTitle>
                 {editingItem ? `Modifier ${activeSection}` : `Ajouter ${activeSection}`}
               </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                {editingItem 
+                  ? `Modifiez les informations de cet élément de la section ${activeSection}.`
+                  : `Ajoutez un nouvel élément à la section ${activeSection}.`
+                }
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
               {renderForm()}

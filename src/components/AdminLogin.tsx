@@ -58,6 +58,11 @@ const AdminLogin = ({ onSuccessfulLogin }: AdminLoginProps) => {
       setEmail('');
       setPassword('');
       
+      // Redirection vers /admin après une connexion réussie
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 500);
+      
       if (onSuccessfulLogin) {
         onSuccessfulLogin();
       }
@@ -82,7 +87,7 @@ const AdminLogin = ({ onSuccessfulLogin }: AdminLoginProps) => {
           className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
         >
           <LogIn className="h-4 w-4 mr-2" />
-          Connexion Admin
+          Se connecter en tant qu'admin
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-black border-yellow-500/30 text-white max-w-md">

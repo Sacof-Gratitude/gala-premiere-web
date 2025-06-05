@@ -37,22 +37,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     // Configurer l'écouteur d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+
         console.log('Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Récupérer le rôle de l'utilisateur
-          console.log('Récupération du rôle pour:', session.user.id);
-          const role = await fetchUserRole(session.user.id);
-          console.log('Rôle récupéré:', role);
-          setUserRole(role);
-          setIsLoading(false);
+          // Vérifier si on est sur une route qui nécessite le rôle
+          const currentPath = window.location.pathname;
+          const protectedRoutes = ['/admin'];
+          
+          if (protectedRoutes.includes(currentPath)) {
+            console.log('Route protégée détectée, récupération du rôle pour:', session.user.id);
+            const role = await fetchUserRole(session.user.id);
+            console.log('Rôle récupéré:', role);
+            if (isMounted) {
+              setUserRole(role);
+            }
+          } else {
+            // Sur les routes publiques, ne pas charger le rôle
+            setUserRole(null);
+          }
         } else {
           setUserRole(null);
+        }
+        
+        if (isMounted) {
           setIsLoading(false);
         }
       }
@@ -62,26 +78,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
         console.log('Session existante:', session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('Récupération du rôle pour session existante:', session.user.id);
-          const role = await fetchUserRole(session.user.id);
-          console.log('Rôle récupéré pour session existante:', role);
-          setUserRole(role);
+          // Vérifier si on est sur une route qui nécessite le rôle
+          const currentPath = window.location.pathname;
+          const protectedRoutes = ['/admin'];
+          
+          if (protectedRoutes.includes(currentPath)) {
+            console.log('Route protégée détectée, récupération du rôle pour session existante:', session.user.id);
+            const role = await fetchUserRole(session.user.id);
+            console.log('Rôle récupéré pour session existante:', role);
+            if (isMounted) {
+              setUserRole(role);
+            }
+          }
         }
       } catch (error) {
         console.error('Erreur lors de la vérification de session:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     checkSession();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -105,7 +136,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Le loading sera géré par onAuthStateChange
   };
 
-  const isAdmin = userRole === 'ADMIN';
+  // Corriger la détection du rôle admin (casse insensible)
+  const isAdmin = userRole?.toLowerCase() === 'admin';
 
   console.log('Auth state:', { user: user?.email, userRole, isAdmin, isLoading });
 

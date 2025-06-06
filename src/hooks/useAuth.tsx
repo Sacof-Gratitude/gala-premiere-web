@@ -62,17 +62,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('Rôle récupéré:', role);
             if (isMounted) {
               setUserRole(role);
+              setIsLoading(false); // Important: arrêter le loading après récupération du rôle
             }
           } else {
-            // Sur les routes publiques, ne pas charger le rôle
+            // Sur les routes publiques, ne pas charger le rôle mais arrêter le loading
             setUserRole(null);
+            if (isMounted) {
+              setIsLoading(false);
+            }
           }
         } else {
           setUserRole(null);
-        }
-        
-        if (isMounted) {
-          setIsLoading(false);
+          if (isMounted) {
+            setIsLoading(false);
+          }
         }
       }
     );
@@ -95,14 +98,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('Rôle récupéré pour session existante:', role);
             if (isMounted) {
               setUserRole(role);
+              setIsLoading(false); // Arrêter le loading après récupération
             }
+          } else {
+            // Sur les routes publiques, arrêter le loading sans charger le rôle
+            if (isMounted) {
+              setIsLoading(false);
+            }
+          }
+        } else {
+          // Pas d'utilisateur connecté, arrêter le loading
+          if (isMounted) {
+            setIsLoading(false);
           }
         }
       } catch (error) {
         console.error('Erreur lors de la vérification de session:', error);
-      } finally {
         if (isMounted) {
-          setIsLoading(false);
+          setIsLoading(false); // Arrêter le loading même en cas d'erreur
         }
       }
     };
@@ -119,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handleRouteChange = async () => {
       // Si on a un utilisateur connecté et qu'on arrive sur une route protégée
-      if (user && checkIfProtectedRoute() && userRole === null) {
+      if (user && checkIfProtectedRoute() && userRole === null && !isLoading) {
         console.log('Navigation vers route protégée détectée, récupération du rôle');
         setIsLoading(true);
         const role = await fetchUserRole(user.id);
@@ -130,7 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     handleRouteChange();
-  }, [user, userRole]);
+  }, [user, userRole, isLoading]);
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);

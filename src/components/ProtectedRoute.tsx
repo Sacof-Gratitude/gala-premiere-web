@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
+import LoadingSpinner from './LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -46,40 +47,24 @@ const ProtectedRoute = ({
 
   // Afficher le loading tant que les données ne sont pas chargées
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black flex items-center justify-center">
-        <div className="text-yellow-400 text-xl">Vérification des autorisations...</div>
-      </div>
-    );
+    return <LoadingSpinner message="Vérification des autorisations..." size="lg" />;
   }
 
   // Ne pas afficher le contenu si l'utilisateur n'est pas connecté
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black flex items-center justify-center">
-        <div className="text-red-400 text-xl">Redirection en cours...</div>
-      </div>
-    );
+    return <LoadingSpinner message="Redirection en cours..." size="md" />;
   }
 
   // Si admin requis, vérifier le rôle
   if (requireAdmin) {
     // Si le rôle n'est pas encore récupéré, afficher le loading
     if (userRole === null) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black flex items-center justify-center">
-          <div className="text-yellow-400 text-xl">Vérification du rôle administrateur...</div>
-        </div>
-      );
+      return <LoadingSpinner message="Vérification du rôle administrateur..." size="lg" />;
     }
     
     // Si pas admin, ne pas afficher le contenu
     if (!isAdmin) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black flex items-center justify-center">
-          <div className="text-red-400 text-xl">Redirection en cours...</div>
-        </div>
-      );
+      return <LoadingSpinner message="Redirection en cours..." size="md" />;
     }
   }
 

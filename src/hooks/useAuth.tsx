@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRole = async (userId: string): Promise<string | null> => {
     try {
       console.log('🔄 Récupération du rôle pour userId:', userId);
       
@@ -47,7 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Fonction pour mettre à jour l'état d'authentification
   const updateAuthState = async (session: Session | null) => {
     console.log('🔄 Mise à jour de l\'état d\'authentification');
     console.log('📧 Session user email:', session?.user?.email || 'aucun');
@@ -76,22 +75,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    let isMounted = true;
     console.log('🚀 Initialisation du hook d\'authentification');
 
-    // Configurer l'écouteur d'état d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!isMounted) return;
-
-        console.log('🔄 Auth state change:', event);
-        console.log('📧 User email:', session?.user?.email || 'aucun');
-        
-        await updateAuthState(session);
-      }
-    );
-
-    // Vérifier la session existante au démarrage
+    // Vérifier la session existante immédiatement
     const initializeAuth = async () => {
       try {
         console.log('🔍 Vérification de la session existante...');
@@ -99,30 +85,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (error) {
           console.error('❌ Erreur lors de la récupération de la session:', error);
-          if (isMounted) {
-            setIsLoading(false);
-          }
+          setIsLoading(false);
           return;
         }
 
         console.log('📋 Session existante:', session?.user?.email || 'aucune');
-        
-        if (isMounted) {
-          await updateAuthState(session);
-        }
+        await updateAuthState(session);
       } catch (error) {
         console.error('💥 Exception lors de l\'initialisation:', error);
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
     initializeAuth();
 
+    // Configurer l'écouteur d'état d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔄 Auth state change:', event);
+        console.log('📧 User email:', session?.user?.email || 'aucun');
+        
+        await updateAuthState(session);
+      }
+    );
+
     return () => {
       console.log('🧹 Nettoyage du hook d\'authentification');
-      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -141,6 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     } else {
       console.log('✅ Connexion réussie');
+      // Ne pas définir isLoading à false ici, cela sera fait dans updateAuthState
     }
     
     return { error };
@@ -150,6 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('🚪 Déconnexion en cours...');
     setIsLoading(true);
     await supabase.auth.signOut();
+    // L'état sera mis à jour via onAuthStateChange
   };
 
   // Détection du rôle admin (insensible à la casse)

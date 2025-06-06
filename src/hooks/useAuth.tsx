@@ -36,6 +36,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const checkIfProtectedRoute = () => {
+    const currentPath = window.location.pathname;
+    const protectedRoutes = ['/admin'];
+    return protectedRoutes.includes(currentPath);
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -50,10 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (session?.user) {
           // Vérifier si on est sur une route qui nécessite le rôle
-          const currentPath = window.location.pathname;
-          const protectedRoutes = ['/admin'];
-          
-          if (protectedRoutes.includes(currentPath)) {
+          if (checkIfProtectedRoute()) {
             console.log('Route protégée détectée, récupération du rôle pour:', session.user.id);
             const role = await fetchUserRole(session.user.id);
             console.log('Rôle récupéré:', role);
@@ -86,10 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (session?.user) {
           // Vérifier si on est sur une route qui nécessite le rôle
-          const currentPath = window.location.pathname;
-          const protectedRoutes = ['/admin'];
-          
-          if (protectedRoutes.includes(currentPath)) {
+          if (checkIfProtectedRoute()) {
             console.log('Route protégée détectée, récupération du rôle pour session existante:', session.user.id);
             const role = await fetchUserRole(session.user.id);
             console.log('Rôle récupéré pour session existante:', role);
@@ -114,6 +114,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Effet supplémentaire pour récupérer le rôle quand on arrive sur une route protégée
+  useEffect(() => {
+    const handleRouteChange = async () => {
+      // Si on a un utilisateur connecté et qu'on arrive sur une route protégée
+      if (user && checkIfProtectedRoute() && userRole === null) {
+        console.log('Navigation vers route protégée détectée, récupération du rôle');
+        setIsLoading(true);
+        const role = await fetchUserRole(user.id);
+        console.log('Rôle récupéré lors du changement de route:', role);
+        setUserRole(role);
+        setIsLoading(false);
+      }
+    };
+
+    handleRouteChange();
+  }, [user, userRole]);
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
